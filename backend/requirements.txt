@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+motor              # Async MongoDB Driver
+pydantic[email]    # Validation
+python-multipart   # For Form data (Login)
+python-jose[cryptography]  # For JWT Tokens
+passlib[bcrypt]    # For Password Hashing
+python-dotenv      # For loading .env variables

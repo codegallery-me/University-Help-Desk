@@ -84,7 +84,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     access_token = create_access_token(data={"sub": user["email"], "role": user["role"]})
     return {"access_token": access_token, "token_type": "bearer", "role": user["role"]}
 
-# --- TICKET ENDPOINTS ---
+# TICKET ENDPOINTS
 
 @app.post("/tickets/", response_model=TicketInDB)
 async def create_ticket(ticket: TicketCreate, current_user: UserInDB = Depends(get_current_user)):
@@ -109,7 +109,7 @@ async def read_all_tickets(current_user: UserInDB = Depends(get_current_user)):
     tickets = await tickets_collection.find().to_list(100)
     return tickets
 
-# --- COMMENT ENDPOINTS ---
+# COMMENT ENDPOINTS
 @app.post("/tickets/{ticket_id}/comments", response_model=CommentInDB)
 async def create_comment(ticket_id: str, comment: CommentCreate, current_user: UserInDB = Depends(get_current_user)):
     new_comment = CommentInDB(
@@ -127,7 +127,7 @@ async def get_comments(ticket_id: str):
     return comments
 
 
-#AUTH ENDPOINTS
+# AUTH ENDPOINTS
 
 @app.post("/auth/register")
 async def register(user: UserCreate):

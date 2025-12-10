@@ -10,6 +10,9 @@ from typing import List
 from database import users_collection, tickets_collection, comments_collection
 from models import UserCreate, UserInDB, TicketCreate, TicketInDB, CommentCreate, CommentInDB
 
+from auth_utils import get_password_hash, verify_password, create_access_token
+from fastapi.security import OAuth2PasswordRequestForm
+
 # --- CONFIG ---
 SECRET_KEY = "CHANGE_THIS_SECRET_KEY"
 ALGORITHM = "HS256"
@@ -122,3 +125,53 @@ async def create_comment(ticket_id: str, comment: CommentCreate, current_user: U
 async def get_comments(ticket_id: str):
     comments = await comments_collection.find({"ticket_id": ticket_id}).to_list(100)
     return comments
+
+
+#AUTH ENDPOINTS
+
+@app.post("/auth/register")
+async def register(user: UserCreate):
+    """
+    Registers a new user (Student or Admin).
+    """
+    # Check if user exists
+    existing_user = await users_collection.find_one({"email": user.email})
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    # Hash password & Save
+    user_dict = user.dict()
+    user_dict["hashed_password"] = get_password_hash(user_dict.pop("password"))
+    
+    await users_collection.insert_one(user_dict)
+    return {"msg": "User created successfully"}
+
+@app.post("/auth/token")
+async def login(form_data: OAuth2PasswordRequestForm = Depends()):
+    """
+    Handles user login and issues a JWT token.
+    Uses standard form-data (username/password) for compatibility.
+    """
+    
+    # Find user by email (FastAPI OAuth2 uses 'username' field for email)
+    user = await users_collection.find_one({"email": form_data.username})
+    
+    if not user:
+        raise HTTPException(status_code=400, detail="Incorrect email or password")
+    
+    # Verify password
+    if not verify_password(form_data.password, user["hashed_password"]):
+        raise HTTPException(status_code=400, detail="Incorrect email or password")
+    
+    # Create Token
+    access_token = create_access_token(
+        data={"sub": user["email"], "role": user["role"]}
+    )
+    
+    # Return token and user details to frontend
+    return {
+        "access_token": access_token, 
+        "token_type": "bearer",
+        "role": user["role"],
+        "user_id": str(user["_id"]) # Convert MongoDB ObjectId to string
+    }

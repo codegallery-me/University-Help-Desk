@@ -327,3 +327,4 @@ async def read_comments(ticket_id: str):
     """
     comments = await comments_collection.find({"ticket_id": ticket_id}).to_list(100)
     return comments
+    return comments

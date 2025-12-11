@@ -86,6 +86,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     return {"access_token": access_token, "token_type": "bearer", "role": user["role"]}
 
 # TICKET ENDPOINTS
+# --- TICKET ENDPOINTS ---
 
 @app.post("/tickets/", response_model=TicketInDB)
 async def create_ticket(ticket: TicketCreate, current_user: UserInDB = Depends(get_current_user)):
@@ -111,6 +112,7 @@ async def read_all_tickets(current_user: UserInDB = Depends(get_current_user)):
     return tickets
 
 # COMMENT ENDPOINTS
+# --- COMMENT ENDPOINTS ---
 @app.post("/tickets/{ticket_id}/comments", response_model=CommentInDB)
 async def create_comment(ticket_id: str, comment: CommentCreate, current_user: UserInDB = Depends(get_current_user)):
     new_comment = CommentInDB(
@@ -176,152 +178,3 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
         "role": user["role"],
         "user_id": str(user["_id"]) # Convert MongoDB ObjectId to string
     }
-
-
-# TICKET ENDPOINTS
-
-@app.post("/tickets/", response_model=TicketInDB)
-async def create_ticket(ticket: TicketCreate, current_user: UserInDB = Depends(get_current_user)):
-    """
-    Create a new ticket. 
-    Automatically assigns the 'owner_id' from the logged-in user.
-    """
-    ticket_data = ticket.dict()
-    
-    # Add server-side fields
-    ticket_data["owner_id"] = str(current_user.id)
-    ticket_data["owner_name"] = current_user.full_name # Helpful for UI
-    ticket_data["status"] = "open"
-    ticket_data["created_at"] = datetime.utcnow()
-
-    new_ticket = await tickets_collection.insert_one(ticket_data)
-    
-    # Fetch the created ticket to return it
-    created_ticket = await tickets_collection.find_one({"_id": new_ticket.inserted_id})
-    return created_ticket
-
-@app.get("/tickets/my_tickets", response_model=List[TicketInDB])
-async def read_my_tickets(current_user: UserInDB = Depends(get_current_user)):
-    """
-    Get only the tickets belonging to the logged-in user.
-    """
-    tickets = await tickets_collection.find({"owner_id": str(current_user.id)}).to_list(100)
-    return tickets
-
-@app.get("/tickets/all", response_model=List[TicketInDB])
-async def read_all_tickets(current_user: UserInDB = Depends(get_current_user)):
-    """
-    Get ALL tickets (Admin Only).
-    """
-    if current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="Not authorized. Admins only.")
-    
-    tickets = await tickets_collection.find().to_list(100)
-    return tickets
-
-@app.get("/tickets/{id}", response_model=TicketInDB)
-async def read_ticket(id: str, current_user: UserInDB = Depends(get_current_user)):
-    """
-    Get details of a specific ticket by ID.
-    """
-    try:
-        # Verify valid ObjectId format
-        obj_id = ObjectId(id)
-    except:
-        raise HTTPException(status_code=400, detail="Invalid Ticket ID format")
-
-    ticket = await tickets_collection.find_one({"_id": obj_id})
-    
-    if ticket is None:
-        raise HTTPException(status_code=404, detail="Ticket not found")
-        
-    return ticket
-
-@app.patch("/tickets/{id}")
-async def update_ticket_status(id: str, status_update: dict, current_user: UserInDB = Depends(get_current_user)):
-    """
-    Update ticket (e.g set to 'resolved').
-    Admin only.
-    """
-    if current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="Admins only.")
-
-    try:
-        obj_id = ObjectId(id)
-    except:
-        raise HTTPException(status_code=400, detail="Invalid Ticket ID")
-
-    new_status = status_update.get("status")
-    if new_status not in ["open", "resolved", "in_progress"]:
-         raise HTTPException(status_code=400, detail="Invalid status")
-
-    result = await tickets_collection.update_one(
-        {"_id": obj_id},
-        {"$set": {"status": new_status}}
-    )
-
-    if result.modified_count == 0:
-        raise HTTPException(status_code=404, detail="Ticket not found or no change made")
-
-    return {"msg": "Status updated successfully"}
-
-@app.delete("/tickets/{id}")
-async def delete_ticket(id: str, current_user: UserInDB = Depends(get_current_user)):
-    """
-    Delete a ticket permanently.
-    Admin only.
-    """
-    if current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="Admins only.")
-
-    try:
-        obj_id = ObjectId(id)
-    except:
-        raise HTTPException(status_code=400, detail="Invalid Ticket ID")
-
-    result = await tickets_collection.delete_one({"_id": obj_id})
-
-    if result.deleted_count == 0:
-        raise HTTPException(status_code=404, detail="Ticket not found")
-
-    return {"msg": "Ticket deleted successfully"}
-
-
-
-# COMMENT ENDPOINTS
-
-@app.post("/tickets/{ticket_id}/comments", response_model=CommentInDB)
-async def create_comment(ticket_id: str, comment: CommentCreate, current_user: UserInDB = Depends(get_current_user)):
-    """
-    Add a comment to a ticket.
-    """
-    # Validate Ticket ID
-    try:
-        t_obj_id = ObjectId(ticket_id)
-    except:
-        raise HTTPException(status_code=400, detail="Invalid Ticket ID")
-
-    # Check if ticket exists first
-    ticket = await tickets_collection.find_one({"_id": t_obj_id})
-    if not ticket:
-        raise HTTPException(status_code=404, detail="Ticket not found")
-
-    # Create Comment
-    comment_data = comment.dict()
-    comment_data["ticket_id"] = ticket_id
-    comment_data["owner_id"] = str(current_user.id)
-    comment_data["owner_name"] = current_user.full_name
-    comment_data["created_at"] = datetime.utcnow()
-
-    new_comment = await comments_collection.insert_one(comment_data)
-    
-    created_comment = await comments_collection.find_one({"_id": new_comment.inserted_id})
-    return created_comment
-
-@app.get("/tickets/{ticket_id}/comments", response_model=List[CommentInDB])
-async def read_comments(ticket_id: str):
-    """
-    Get all comments for a specific ticket.
-    """
-    comments = await comments_collection.find({"ticket_id": ticket_id}).to_list(100)
-    return comments

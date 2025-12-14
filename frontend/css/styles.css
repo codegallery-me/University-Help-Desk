@@ -58,75 +58,31 @@ body {
 
 /* 
    TICKET DETAIL & COMMENTS
-TICKET DETAIL & COMMENTS - Kept for future use
 */
 .ticket-header {
-    background-color: rgb(239, 238, 243);
-    padding: 1.8rem;
+    background-color: white;
+    padding: 2rem;
     border-radius: 10px;
+    border-left: 5px solid var(--primary-color);
     box-shadow: 0 2px 10px rgba(0,0,0,0.05);
 }
 
-.ticket-header h1{
-    font-size: 32px;
-    font-weight:900;
-    margin-bottom: 8px;
-    
-
-}
-.ticket-header p{
-    margin: 0;
-    color:#555;
-    font-size: 14px;
-}
-.card {
-    border-radius: 12px;
-    overflow: hidden;
+.comment-box {
+    background-color: white;
+    border-radius: 10px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
 }
 
-body {
-    font-family: Arial, sans-serif;
-    padding: 40px;
-    
+.comment-item {
+    border-bottom: 1px solid #eee;
+    padding: 1rem 0;
 }
-h1{
-    
-    display:block;
-    font-weight:900;
-    font-size: 34px;
-    border-radius: 09px;
-    margin-bottom: 10px;
-    margin-top: 10px;
+.comment-item:last-child {
+    border-bottom: none;
 }
 
-label {
-    margin-top: 20px;
-    font-size: 18px;
-    display: block;
-    font-weight:600;
+.comment-meta {
+    font-size: 0.8rem;
+    color: #888;
 }
-
-input, select, textarea {
-    width: 100%;
-    padding: 10px;
-    margin-top: 12px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-   
-}
-
-button {
-    width: 100%;
-    padding: 12px;
-    background: #007bff;
-    color: white;
-    border: none;
-    margin-top: 20px;
-    font-size: 16px;
-    border-radius: 6px;
-    cursor: pointer;
-}
-
-
-
-

@@ -68,7 +68,6 @@ async function apiCall(endpoint, method = "GET", data = null) {
 
 // AUTHENTICATION MODULE (For Dev 1 & 2)
 
-// frontend/js/api.js - UPDATED LOGIN FUNCTION
 
     
 export async function login(email, password) {

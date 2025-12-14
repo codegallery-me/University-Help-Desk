@@ -14,21 +14,21 @@ document.addEventListener("DOMContentLoaded", () => {
     e.preventDefault();
 
 
-    // 2️⃣ Collect form data
+    // 2️ Collect form data
     const ticketData = {
       title: document.getElementById("title").value.trim(),
       category: document.getElementById("category").value,
       description: document.getElementById("description").value.trim(),
     };
 
-    // 3️⃣ Basic validation
+    // 3️ Basic validation
     if (!ticketData.title || !ticketData.category || !ticketData.description) {
       alert("Please fill in all fields.");
       return;
     }
 
     try {
-      // 4️⃣ Call backend API (POST /tickets/)
+      // 4️ Call backend API (POST /tickets/)
       const response = await fetch("http://localhost:8000/tickets/", {
         method: "POST",
         headers: {
@@ -38,7 +38,6 @@ document.addEventListener("DOMContentLoaded", () => {
         body: JSON.stringify(ticketData),
       });
 
-      // 5️⃣ Handle response
             if (response.ok) {
                 alert("Ticket created successfully!");
                 window.location.href = "dashboard.html"; // Go back to dashboard

@@ -70,6 +70,7 @@ async function apiCall(endpoint, method = "GET", data = null) {
 
 // frontend/js/api.js - UPDATED LOGIN FUNCTION
 
+ 
 export async function login(email, password) {
     // 1. Create a URLSearchParams object to format the data correctly
     const details = new URLSearchParams();
@@ -99,6 +100,7 @@ export async function login(email, password) {
     // which expects form-data. However, for simplicity in the MongoDB example,
     // if you switched to JSON body for login, use this. 
     // IF using standard OAuth2 form data:
+  
     const formData = new FormData();
     formData.append("username", email); // FastAPI OAuth2 expects 'username', not 'email'
     formData.append("password", password);

@@ -91,7 +91,8 @@ export async function login(email, password) {
         const errorDetail = await response.json();
         throw new Error(errorDetail.detail || "Login failed. Check credentials.");
     }
-    
+}
+
 export async function login(email, password) {
     // Note: OAuth2 expects form data, but our API schema might expect JSON.
     // Based on the specific FASTAPI setup provided earlier, we used OAuth2PasswordRequestForm

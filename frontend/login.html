@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UniSupport Login</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+    <div class="container">
+        <form id="login-form" class="login-box">
+            <h2>UniSupport Login</h2>
+
+            <label>Email Address</label>
+            <input type="email" id="email" name="email" placeholder="student@uni.ac.lk" required>
+
+            <label>Password</label>
+            <input type="password" id="password" name="password" placeholder="********" required>
+
+            <button type="submit" class="btn">Sign In</button>
+
+            <p class="register-text">Don't have an account? <a href="register.html">Register</a></p>
+        </form>
+    </div>
+
+    <script type="module">
+        import { login } from './js/api.js';
+
+        const loginForm = document.getElementById('login-form');
+
+        loginForm.addEventListener('submit', async (event) => {
+            event.preventDefault(); // Stop page reload
+
+            const emailInput = document.getElementById('email').value;
+            const passwordInput = document.getElementById('password').value;
+
+            try {
+                const data = await login(emailInput, passwordInput);
+
+                if (data.access_token) {
+                    // Save Token
+                    localStorage.setItem('access_token', data.access_token);
+                    localStorage.setItem('user_role', data.role);
+                    localStorage.setItem('user_id', data.user_id);
+                    
+                    alert("Login Successful!");
+
+                    // Redirect
+                    if (data.role === 'admin') {
+                        window.location.href = 'admin.html';
+                    } else {
+                        window.location.href = 'dashboard.html';
+                    }
+                } else {
+                    alert("Login failed: No token received.");
+                }
+
+            } catch (error) {
+                console.error("Login Error:", error);
+                alert("Login Error: " + error.message);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -2,7 +2,7 @@ import { getMyTickets } from './api.js';
 
 
 // Security
-if (!localStorage.getItem("access_token")) {
+if (typeof localStorage === "undefined" || !localStorage.getItem("access_token")) {
     alert("Please login");
     window.location.href = "login.html";
 }
@@ -11,7 +11,7 @@ const tableBody = document.getElementById("ticket-table-body");
 
 async function loadTickets() {
     try {
-        const tickets = await getTickets();
+        const tickets = await getMyTickets();
         tableBody.innerHTML = "";
 
         if (tickets.length === 0) {

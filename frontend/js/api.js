@@ -69,29 +69,7 @@ async function apiCall(endpoint, method = "GET", data = null) {
 
 // frontend/js/api.js - UPDATED LOGIN FUNCTION
 
- 
-export async function login(email, password) {
-    // 1. Create a URLSearchParams object to format the data correctly
-    const details = new URLSearchParams();
-    
-    // IMPORTANT: FastAPI OAuth2 expects 'username' for the email field
-    details.append('username', email); 
-    details.append('password', password); 
 
-    // 2. Send the request
-    const response = await fetch(`${API_BASE_URL}/auth/token`, {
-        method: "POST",
-        // Do NOT set Content-Type: application/json
-        // Browser will correctly set Content-Type: application/x-www-form-urlencoded
-        body: details 
-    });
-
-    if (!response.ok) {
-        // Handle common 400 errors from FastAPI (incorrect password, etc.)
-        const errorDetail = await response.json();
-        throw new Error(errorDetail.detail || "Login failed. Check credentials.");
-    }
-}
 
 export async function login(email, password) {
     // Note: OAuth2 expects form data, but our API schema might expect JSON.

@@ -25,6 +25,8 @@ async function loadTickets() {
         }
 
         tickets.forEach(t => {
+            const ticketId = t._id?.$oid;
+            
             tableBody.innerHTML += `
                 <tr data-id="${t.ticket_id}" style="cursor:pointer;">
                     <td>${t.ticket_id}</td>

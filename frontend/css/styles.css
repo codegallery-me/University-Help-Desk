@@ -166,3 +166,55 @@ textarea.form-control {
 .mb-3 { margin-bottom: 1rem; }
 .mt-3 { margin-top: 1rem; }
 .d-none { display: none; }
+
+
+
+/*** Comments ***/
+
+.comment-box {
+    margin-bottom: 10px;
+}
+
+.comment-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+}
+
+.comment-author {
+    font-weight: 600;
+}
+
+.comment-time {
+    font-size: 0.8rem;
+    color: gray;
+}
+
+
+/* Add Comment */
+
+textarea {
+    width: 100%;
+    resize: none;
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    margin-bottom: 10px;
+}
+
+.btn-primary {
+    background-color: #0d6efd;
+    color: #ffffff;
+    border: none;
+    padding: 6px 12px;
+    font-size: 0.85rem;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 150px;
+}
+
+.btn-primary:hover {
+    background-color: #0b5ed7;
+}
+
+/*** End of Comments ***/

@@ -28,7 +28,7 @@ async function loadTickets() {
             const ticketId = t._id?.$oid;
             
             tableBody.innerHTML += `
-                <tr data-id="${t.ticket_id}" style="cursor:pointer;">
+                <tr data-id="${t._id}" style="cursor:pointer;">
                     <td>${t.ticket_id}</td>
                     <td>${t.title}</td>
                     <td>${t.category}</td>

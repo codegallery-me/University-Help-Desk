@@ -45,6 +45,17 @@
                 <h5><b>Description:</b></h5>
                 <p id="ticket-description" class="text-muted">  Loading description...</p>
 
+                <hr>
+
+                <h5><b>Comments</b></h5>
+
+                <!-- Comment -->
+                <div id="comments-container"></div>
+
+                <!-- Add Comment -->
+                <textarea id="comment-text" rows="3" placeholder="Add comment..."></textarea>
+                <button id="post-comment-btn" class="btn-primary">Post Comment</button>
+
             </div>  
         </div>  
     </div>  
@@ -52,6 +63,7 @@
 
     <script type="module">  
         import { loadNavbar } from './js/navbar.js';  
+        import { getTicketById, getComments, addComment } from './js/api.js';
 
         loadNavbar();  
 
@@ -110,7 +122,7 @@
                 statusEl.classList.add("bg-success");  
             }  
         })  
-          
+
         .catch(err=>{  
             console.error(err);  
             alert("Error loading ticket details");  
@@ -120,6 +132,62 @@
             localStorage.clear();
             window.location.href = "login.html";
         };
+
+
+        // Load Comments
+        async function loadComments() {
+            try {
+                const comments = await getComments(ticketId);
+                const container = document.getElementById("comments-container");
+                container.innerHTML = "";
+
+                if (!comments || comments.length === 0) {
+                    container.innerHTML = "<p class='text-muted'>No comments yet.</p>";
+                    return;
+                }
+
+                comments.forEach(c => {
+                    const div = document.createElement("div");
+                    
+                    div.className = "comment-box border rounded p-2 mb-2"; 
+
+                    div.innerHTML = `<div class="comment-header">
+
+                        <span class="comment-author">${c.owner_name}</span>
+                        <span class="comment-time">${new Date(c.created_at).toISOString().split("T")[0]}</span>
+                        
+                        </div>
+                        <p class="mb-1">${c.text}</p>
+                    `;
+                    container.appendChild(div);
+                });
+            } catch (err) {
+                console.error("Error loading comments:", err);
+            }
+        }
+    
+
+
+        // Post Comment 
+        document.getElementById("post-comment-btn").onclick = async () => {
+            const input = document.getElementById("comment-text");
+            const text = input.value.trim();
+
+            if (!text) return alert("Comment cannot be empty");
+
+            try {
+                await addComment(ticketId, text);
+                input.value = "";
+
+                loadComments(); 
+
+            } catch (err) {
+                alert("Could not post comment.");
+            }
+        };
+
+        loadComments();
+
 
     </script>  
 </body>

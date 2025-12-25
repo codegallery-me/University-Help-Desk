@@ -17,10 +17,8 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 app = FastAPI()
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
 
-# CORS (Allow Frontend)
+# CORS (Allow Frontend) - must be set immediately after FastAPI()!
 origins = [
     "http://localhost",
     "http://localhost:5500",
@@ -31,13 +29,16 @@ origins = [
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,  # Use the list above
+    allow_origins=origins,  # Or use ["*"] for debugging
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # --- HELPERS ---
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
+
 def get_password_hash(password):
     return pwd_context.hash(password)
 

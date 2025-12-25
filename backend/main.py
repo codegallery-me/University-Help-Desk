@@ -21,9 +21,16 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
 
 # CORS (Allow Frontend)
+origins = [
+    "http://localhost",
+    "http://localhost:5500",
+    "http://127.0.0.1:5500",
+    "https://university-support.netlify.app"  # <--- YOUR NETLIFY URL
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,  # Use the list above
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

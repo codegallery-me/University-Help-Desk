@@ -1,6 +1,6 @@
 // ⚙️ CONFIGURATION
 
-const API_BASE_URL = "http://localhost:8000";
+const API_BASE_URL = "https://university-help-desk.onrender.com";
 
 /**
  * Automatically adds the JWT Token to every request.

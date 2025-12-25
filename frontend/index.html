@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>University Help Desk</title>
+    <link href="https://fonts.googleapis.com/css?family=Roboto:400,700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            margin: 0;
+            background: #f4f6fb;
+            color: #222;
+        }
+        header {
+            background: #2a5298;
+            color: #fff;
+            padding: 1.5rem 0;
+            text-align: center;
+        }
+        nav {
+            margin: 1rem 0;
+            text-align: center;
+        }
+        nav a {
+            color: #2a5298;
+            text-decoration: none;
+            margin: 0 1rem;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+        nav a:hover {
+            color: #1e3c72;
+        }
+        .container {
+            max-width: 800px;
+            margin: 2rem auto;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(42,82,152,0.08);
+            padding: 2rem;
+        }
+        h1 {
+            margin: 0;
+            font-size: 2.5rem;
+            letter-spacing: 1px;
+        }
+        .intro {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            color: #444;
+        }
+        .features {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            justify-content: space-between;
+        }
+        .feature {
+            flex: 1 1 220px;
+            background: #f4f6fb;
+            border-radius: 6px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 1px 4px rgba(42,82,152,0.05);
+        }
+        .feature h3 {
+            margin-top: 0;
+            color: #2a5298;
+        }
+        @media (max-width: 600px) {
+            .features {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>University Help Desk</h1>
+        <p>Your one-stop solution for campus support</p>
+    </header>
+    <nav>
+        <a href="index.html">Home</a>
+        <a href="frontend/dashboard.html">Submit Ticket</a>
+        <a href="faq.html">FAQs</a>
+        <a href="contact.html">Contact</a>
+        <a href="frontend/login.html">Login</a>
+    </nav>
+    <div class="container">
+        <div class="intro">
+            Welcome to the University Help Desk! We are here to assist you with all your academic and campus-related queries. Submit a ticket, browse FAQs, or contact our support team for quick help.
+        </div>
+        <div class="features">
+            <div class="feature">
+                <h3>Submit a Ticket</h3>
+                <p>Report issues or request assistance easily. Our team will respond promptly to your queries.</p>
+            </div>
+            <div class="feature">
+                <h3>Browse FAQs</h3>
+                <p>Find answers to common questions about university services, academics, and campus life.</p>
+            </div>
+            <div class="feature">
+                <h3>Track Requests</h3>
+                <p>Monitor the status of your submitted tickets and receive timely updates.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

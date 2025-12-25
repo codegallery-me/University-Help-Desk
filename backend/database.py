@@ -2,15 +2,20 @@ import os
 from motor.motor_asyncio import AsyncIOMotorClient
 from dotenv import load_dotenv
 
+# 1. Load the .env file
 load_dotenv()
 
-# Get DB URL from .env or use local default
-MONGO_URL = os.getenv("MONGO_URL", "mongodb://localhost:27017")
+# 2. Get the MONGO_URI variable
+MONGO_URL = os.getenv("MONGO_URI")
 
+# Safety Check: If the variable is missing, warn the developer
+if not MONGO_URL:
+    print("❌ Error: MONGO_URI is missing from .env file!")
+
+# 3. Connect using the variable
 client = AsyncIOMotorClient(MONGO_URL)
-db = client.unisupport_db  # This creates the DB automatically
 
-# Collections (Like Tables)
-users_collection = db.get_collection("users")
-tickets_collection = db.get_collection("tickets")
-comments_collection = db.get_collection("comments")
+db = client.university_help_desk
+users_collection = db.users
+tickets_collection = db.tickets
+comments_collection = db.comments

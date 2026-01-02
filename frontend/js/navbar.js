@@ -39,7 +39,7 @@ export function loadNavbar() {
         // Logout Button
         links += `
             <li class="nav-item ms-lg-3">
-                <button id="nav-logout-btn" class="btn btn-outline-light btn-sm mt-1">Logout</button>
+                <button id="nav-logout-btn" class="btn-logout">Logout</button>
             </li>
         `;
     } else {

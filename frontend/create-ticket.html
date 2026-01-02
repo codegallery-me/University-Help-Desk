@@ -1,68 +1,99 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create Ticket - UniSupport</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="css/styles.css">
 </head>
 
-<body class="bg-light">
+<body id="body-root">
 
     <div id="navbar-placeholder"></div>
 
-    <div class="container d-flex justify-content-center">
-        <div class="card shadow" style="width: 100%; max-width: 600px;">
-            <div class="card-header bg-white text-center py-3">
-                <h3 class="mb-0">Create New Ticket</h3>
-                <small class="text-muted">Describe your issue clearly</small>
-            </div>
-            <div class="card-body">
+    <div class="container mt-5 mb-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 col-md-10">
+                
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="fw-bold">Create New Ticket</h2>
+                    <button id="theme-toggle" class="btn btn-outline-secondary bg-white" title="Toggle dark mode">
+                        <span id="theme-icon" class="fa-solid fa-moon"></span>
+                    </button>
+                </div>
 
-                <form id="create-ticket-form">
-
-                    <div class="mb-3">
-                        <label for="title" class="form-label">Title</label>
-                        <input type="text" class="form-control" id="title" placeholder="e.g., Projector Broken in Lab 1"
-                            required>
+                <div class="modern-card p-4 p-md-5">
+                    <div class="text-center mb-4">
+                        <h4 class="fw-bold">Describe Your Issue</h4>
+                        <p class="text-muted small">Please provide as much detail as possible so we can help you faster.</p>
                     </div>
 
-                    <div class="mb-3">
-                        <label for="category" class="form-label">Category</label>
-                        <select class="form-select" id="category" required>
-                            <option value="" disabled selected>Select category</option>
-                            <option value="it">IT Support</option>
-                            <option value="facility">Facility / Maintenance</option>
-                            <option value="academic">Academic Inquiry</option>
-                        </select>
-                    </div>
+                    <form id="create-ticket-form">
+                        <div class="mb-4">
+                            <label for="title" class="form-label fw-bold">Ticket Title</label>
+                            <input type="text" class="form-control form-control-lg" id="title" placeholder="e.g., Projector Issue in Lab 3" required>
+                        </div>
 
-                    <div class="mb-3">
-                        <label for="description" class="form-label">Description</label>
-                        <textarea class="form-control" id="description" rows="5"
-                            placeholder="Explain the issue in detail..." required></textarea>
-                    </div>
+                        <div class="mb-4">
+                            <label for="category" class="form-label fw-bold">Category</label>
+                            <select class="form-select form-select-lg" id="category" required>
+                                <option value="" disabled selected>Select a category...</option>
+                                <option value="it">IT Support</option>
+                                <option value="facility">Facility / Maintenance</option>
+                                <option value="academic">Academic Inquiry</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
 
-                    <button type="submit" class="btn btn-primary w-100">Submit Ticket</button>
-                </form>
+                        <div class="mb-4">
+                            <label for="description" class="form-label fw-bold">Detailed Description</label>
+                            <textarea class="form-control" id="description" rows="6" placeholder="Explain the issue..." required></textarea>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fa-solid fa-paper-plane me-2"></i> Submit Ticket
+                            </button>
+                            <a href="dashboard.html" class="btn btn-link text-decoration-none text-muted">Cancel</a>
+                        </div>
+                    </form>
+                </div>
 
             </div>
         </div>
     </div>
 
     <script type="module" src="js/ticket.js"></script>
-    <script type="module" src="js/navbar.js"></script>
     <script type="module">
         import { loadNavbar } from './js/navbar.js';
-        if (typeof loadNavbar === 'function') {
-            loadNavbar();
-        } else {
-            console.error('loadNavbar is not defined.');
-        }
+        if (typeof loadNavbar === 'function') loadNavbar();
     </script>
+    
+    <script>
+        // Standardized Dark Mode Logic
+        const bodyRoot = document.getElementById('body-root');
+        const themeToggle = document.getElementById('theme-toggle');
+        const themeIcon = document.getElementById('theme-icon');
 
+        function setTheme(dark) {
+            if (dark) {
+                bodyRoot.classList.add('dark-theme');
+                themeIcon.classList.remove('fa-moon');
+                themeIcon.classList.add('fa-sun');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                bodyRoot.classList.remove('dark-theme');
+                themeIcon.classList.remove('fa-sun');
+                themeIcon.classList.add('fa-moon');
+                localStorage.setItem('theme', 'light');
+            }
+        }
+        if(themeToggle) {
+            themeToggle.addEventListener('click', () => setTheme(!bodyRoot.classList.contains('dark-theme')));
+        }
+        setTheme(localStorage.getItem('theme') === 'dark');
+    </script>
 </body>
-
 </html>

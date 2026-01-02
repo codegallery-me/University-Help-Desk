@@ -41,7 +41,7 @@ origins = [
     "http://127.0.0.1:5500",
     "http://127.0.0.1:5501",
     "https://university-support.netlify.app",  # Netlify frontend
-    "https://university-help-desk.onrender.com" # Render backend (for preflight, if needed)
+    "https://university-help-desk.onrender.com", # Render backend (for preflight, if needed)
     https://help-desk-preview.netlify.app
 ]
 

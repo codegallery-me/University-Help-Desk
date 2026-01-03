@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,6 +9,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="css/styles.css">
 </head>
+
 <body class="bg-light">
 
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -23,7 +25,7 @@
 
     <div class="container py-5">
         <h3 class="mb-4 fw-bold">System Activity Log</h3>
-        
+
         <div class="card shadow-sm border-0">
             <div class="card-body p-0">
                 <div class="table-responsive">
@@ -38,7 +40,9 @@
                             </tr>
                         </thead>
                         <tbody id="logs-body">
-                            <tr><td colspan="5" class="text-center py-4">Loading logs...</td></tr>
+                            <tr>
+                                <td colspan="5" class="text-center py-4">Loading logs...</td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -47,7 +51,7 @@
     </div>
 
     <script>
-        const API_URL = "http://localhost:8000"; // Update for production
+        const API_URL = "https://uni-help-desk.onrender.com"; // Update for production
         const token = localStorage.getItem("access_token");
 
         if (!token) window.location.href = "login.html";
@@ -76,7 +80,7 @@
                 logs.forEach(log => {
                     // Format Date
                     const date = new Date(log.timestamp).toLocaleString();
-                    
+
                     // Badge Color based on Action
                     let badgeClass = "bg-secondary";
                     if (log.action === "DELETE_TICKET") badgeClass = "bg-danger";
@@ -103,4 +107,5 @@
         fetchLogs();
     </script>
 </body>
+
 </html>

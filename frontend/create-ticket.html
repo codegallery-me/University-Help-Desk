@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,11 +9,13 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="css/styles.css">
 </head>
+
 <body class="bg-light">
 
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm mb-4">
         <div class="container">
-            <a class="navbar-brand fw-bold" href="dashboard.html"><i class="fa-solid fa-graduation-cap me-2"></i>UniSupport</a>
+            <a class="navbar-brand fw-bold" href="dashboard.html"><i
+                    class="fa-solid fa-graduation-cap me-2"></i>UniSupport</a>
             <a href="dashboard.html" class="btn btn-outline-light btn-sm">Back to Dashboard</a>
         </div>
     </nav>
@@ -20,13 +23,13 @@
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-md-8">
-                
+
                 <div class="card shadow-sm border-0">
                     <div class="card-header bg-white py-3">
                         <h4 class="mb-0 fw-bold">Submit a New Ticket</h4>
                     </div>
                     <div class="card-body p-4">
-                        
+
                         <form id="ticket-form">
                             <div class="mb-3">
                                 <label class="form-label fw-bold">Category</label>
@@ -40,10 +43,11 @@
 
                             <div class="mb-3 position-relative">
                                 <label class="form-label fw-bold">Subject</label>
-                                <input type="text" id="title" class="form-control" placeholder="e.g. Wi-Fi isn't working" required autocomplete="off">
-                                
+                                <input type="text" id="title" class="form-control"
+                                    placeholder="e.g. Wi-Fi isn't working" required autocomplete="off">
+
                                 <div id="faq-suggestions" class="list-group mt-2 shadow-sm d-none">
-                                    </div>
+                                </div>
                             </div>
 
                             <div class="mb-3">
@@ -57,7 +61,8 @@
 
                             <div class="mb-4">
                                 <label class="form-label fw-bold">Description</label>
-                                <textarea id="description" class="form-control" rows="5" placeholder="Describe your issue in detail..." required></textarea>
+                                <textarea id="description" class="form-control" rows="5"
+                                    placeholder="Describe your issue in detail..." required></textarea>
                             </div>
 
                             <div class="d-grid">
@@ -73,7 +78,7 @@
     </div>
 
     <script>
-        const API_URL = "http://localhost:8000"; 
+        const API_URL = "https://uni-help-desk.onrender.com";
         const token = localStorage.getItem("access_token");
         if (!token) window.location.href = "login.html";
 
@@ -82,13 +87,13 @@
 
         // 1. SMART SEARCH LOGIC (Debounce)
         let timeout = null;
-        
-        titleInput.addEventListener('input', function() {
+
+        titleInput.addEventListener('input', function () {
             const query = this.value.trim();
-            
+
             // Clear previous timer
             clearTimeout(timeout);
-            
+
             // Hide if empty
             if (query.length < 3) {
                 suggestionsBox.classList.add('d-none');
@@ -110,7 +115,7 @@
                             <i class="fa-solid fa-lightbulb me-2"></i>Suggested Solutions
                         </div>
                     `;
-                    
+
                     faqs.forEach(faq => {
                         suggestionsBox.innerHTML += `
                             <div class="list-group-item list-group-item-action">
@@ -121,7 +126,7 @@
                             </div>
                         `;
                     });
-                    
+
                     suggestionsBox.classList.remove('d-none');
                 } else {
                     suggestionsBox.classList.add('d-none');
@@ -134,7 +139,7 @@
         // 2. SUBMIT TICKET LOGIC (Original)
         document.getElementById('ticket-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
+
             const btn = e.target.querySelector('button');
             btn.disabled = true;
             btn.textContent = "Submitting...";
@@ -157,7 +162,7 @@
                 });
 
                 if (!res.ok) throw new Error("Failed");
-                
+
                 alert("Ticket Created Successfully!");
                 window.location.href = "dashboard.html";
 
@@ -169,4 +174,5 @@
         });
     </script>
 </body>
+
 </html>

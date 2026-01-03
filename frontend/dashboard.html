@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,10 +11,11 @@
 </head>
 
 <body id="body-root">
-    
+
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm mb-4">
         <div class="container">
-            <a class="navbar-brand fw-bold" href="dashboard.html"><i class="fa-solid fa-graduation-cap me-2"></i>UniSupport</a>
+            <a class="navbar-brand fw-bold" href="dashboard.html"><i
+                    class="fa-solid fa-graduation-cap me-2"></i>UniSupport</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -53,10 +55,13 @@
                                 <th class="py-3 text-secondary small fw-bold text-uppercase">Category</th>
                                 <th class="py-3 text-secondary small fw-bold text-uppercase">Status</th>
                                 <th class="py-3 text-secondary small fw-bold text-uppercase">Created</th>
-                                <th class="py-3 text-secondary small fw-bold text-uppercase">Action</th> </tr>
+                                <th class="py-3 text-secondary small fw-bold text-uppercase">Action</th>
+                            </tr>
                         </thead>
                         <tbody id="ticket-table-body">
-                            <tr><td colspan="6" class="text-center py-4 text-muted">Loading tickets...</td></tr>
+                            <tr>
+                                <td colspan="6" class="text-center py-4 text-muted">Loading tickets...</td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -73,7 +78,7 @@
                 </div>
                 <div class="modal-body text-center">
                     <p class="text-muted">How was the service for this ticket?</p>
-                    
+
                     <div class="rating-stars mb-3" style="font-size: 2rem; cursor: pointer; color: #ddd;">
                         <i class="fa-solid fa-star" data-value="1"></i>
                         <i class="fa-solid fa-star" data-value="2"></i>
@@ -83,7 +88,8 @@
                     </div>
                     <input type="hidden" id="ratingValue" value="0">
 
-                    <textarea id="ratingComment" class="form-control" rows="3" placeholder="Any additional comments? (Optional)"></textarea>
+                    <textarea id="ratingComment" class="form-control" rows="3"
+                        placeholder="Any additional comments? (Optional)"></textarea>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -97,7 +103,7 @@
 
     <script type="module">
         // --- CONFIG ---
-        const API_URL = "http://localhost:8000"; // Or your Render URL
+        const API_URL = "https://uni-help-desk.onrender.com"; // Or your Render URL
         const token = localStorage.getItem("access_token");
 
         // Auth Check
@@ -123,7 +129,7 @@
 
                 tickets.forEach(ticket => {
                     const date = new Date(ticket.created_at).toLocaleDateString();
-                    
+
                     // Status Badge Logic
                     let badgeClass = "bg-secondary";
                     if (ticket.status === "open") badgeClass = "bg-warning text-dark";
@@ -132,7 +138,7 @@
 
                     // ⭐ RATING BUTTON LOGIC
                     let actionHtml = `<a href="ticket-detail.html?id=${ticket._id}" class="btn btn-sm btn-outline-primary">View</a>`;
-                    
+
                     if (ticket.status === 'resolved' && !ticket.rating) {
                         // Show "Rate Us" button if resolved and not yet rated
                         actionHtml += `
@@ -181,7 +187,7 @@
             document.getElementById('ratingValue').value = 0;
             document.getElementById('ratingComment').value = "";
             document.querySelectorAll('.rating-stars i').forEach(s => s.style.color = '#ddd');
-            
+
             // Show Modal
             const modalEl = document.getElementById('ratingModal');
             const modal = new bootstrap.Modal(modalEl);
@@ -191,7 +197,7 @@
         window.submitRating = async () => {
             const rating = document.getElementById('ratingValue').value;
             const comment = document.getElementById('ratingComment').value;
-            
+
             if (rating == 0) {
                 alert("Please select at least one star.");
                 return;
@@ -214,7 +220,7 @@
 
                 alert("Thank you for your feedback!");
                 // Close modal (reload page to refresh table)
-                location.reload(); 
+                location.reload();
 
             } catch (err) {
                 console.error(err);
@@ -224,10 +230,10 @@
 
         // Star Click Handler
         document.querySelectorAll('.rating-stars i').forEach(star => {
-            star.addEventListener('click', function() {
+            star.addEventListener('click', function () {
                 const value = this.getAttribute('data-value');
                 document.getElementById('ratingValue').value = value;
-                
+
                 // Color stars
                 document.querySelectorAll('.rating-stars i').forEach(s => {
                     if (s.getAttribute('data-value') <= value) {
@@ -267,40 +273,41 @@
         });
 
         // REAL TIME WEBSOCKETS 
-const ws = new WebSocket("ws://localhost:8000/ws");
+        const ws = new WebSocket("ws://localhost:8000/ws");
 
-ws.onmessage = function(event) {
-    const data = JSON.parse(event.data);
+        ws.onmessage = function (event) {
+            const data = JSON.parse(event.data);
 
-    // Only care about Status Changes
-    if (data.type === "status_change") {
-        updateTicketRow(data.ticket_id, data.new_status);
-    }
-};
+            // Only care about Status Changes
+            if (data.type === "status_change") {
+                updateTicketRow(data.ticket_id, data.new_status);
+            }
+        };
 
-function updateTicketRow(ticketId, newStatus) {
-    // Note: We need to look for the ID in the text content
-    const rows = document.querySelectorAll("#ticket-table-body tr");
-    
-    rows.forEach(row => {
-        const idCell = row.cells[0]; // First column is ID
-        if (idCell && idCell.innerText.includes(ticketId.slice(-4))) {
-            
-            // 2. Update the Status Badge (4th column, index 3)
-            const statusCell = row.cells[3];
-            let badgeClass = "bg-secondary";
-            if (newStatus === "open") badgeClass = "bg-warning text-dark";
-            if (newStatus === "in_progress") badgeClass = "bg-info text-dark";
-            if (newStatus === "resolved") badgeClass = "bg-success";
+        function updateTicketRow(ticketId, newStatus) {
+            // Note: We need to look for the ID in the text content
+            const rows = document.querySelectorAll("#ticket-table-body tr");
 
-            statusCell.innerHTML = `<span class="badge ${badgeClass}">${newStatus.toUpperCase().replace("_", " ")}</span>`;
-            
-            // Optional: Highlight row briefly
-            row.style.backgroundColor = "#fff3cd";
-            setTimeout(() => row.style.backgroundColor = "", 1000);
+            rows.forEach(row => {
+                const idCell = row.cells[0]; // First column is ID
+                if (idCell && idCell.innerText.includes(ticketId.slice(-4))) {
+
+                    // 2. Update the Status Badge (4th column, index 3)
+                    const statusCell = row.cells[3];
+                    let badgeClass = "bg-secondary";
+                    if (newStatus === "open") badgeClass = "bg-warning text-dark";
+                    if (newStatus === "in_progress") badgeClass = "bg-info text-dark";
+                    if (newStatus === "resolved") badgeClass = "bg-success";
+
+                    statusCell.innerHTML = `<span class="badge ${badgeClass}">${newStatus.toUpperCase().replace("_", " ")}</span>`;
+
+                    // Optional: Highlight row briefly
+                    row.style.backgroundColor = "#fff3cd";
+                    setTimeout(() => row.style.backgroundColor = "", 1000);
+                }
+            });
         }
-    });
-}
     </script>
 </body>
+
 </html>

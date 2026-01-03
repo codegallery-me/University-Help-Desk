@@ -4,14 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Portal - UniSupport</title>
+    
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
     <link rel="stylesheet" href="css/styles.css">
 </head>
 
 <body id="body-root">
     
-     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
             <span class="navbar-brand mb-0 h1 fw-bold">
                 <i class="fa-solid fa-graduation-cap me-2"></i>UniSupport <span class="badge bg-danger ms-2" style="font-size: 0.7em;">ADMIN</span>
@@ -21,19 +24,20 @@
                 <button id="theme-toggle" class="btn btn-sm btn-outline-light" title="Toggle dark mode">
                     <span id="theme-icon" class="fa-solid fa-moon"></span>
                 </button>
-                <a href="login.html" class="btn-logout">
-    <i class="fa-solid fa-right-from-bracket"></i> Logout
-</a>
+                <button id="logoutBtn" class="btn btn-sm btn-danger">
+                    <i class="fa-solid fa-right-from-bracket"></i> Logout
+                </button>
             </div>
         </div>
     </nav>
     
     <div class="container py-4">
+
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h3 class="mb-0 fw-bold">Ticket Management</h3>
         </div>
 
-        <div class="modern-card overflow-hidden">
+        <div class="modern-card overflow-hidden shadow-sm mb-5">
             <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table table-hover mb-0 align-middle">
@@ -47,20 +51,115 @@
                                 <th class="py-3">Action</th>
                             </tr>
                         </thead>
-
                         <tbody id="ticket-table-body">
                            </tbody>
-
                     </table>
                 </div>
             </div>
         </div>
+
+        <hr class="my-5 text-muted">
+
+        <h3 class="mb-3 fw-bold">Analytics Overview</h3>
+        <div class="row mb-4">
+            <div class="col-md-6 mb-3">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-white fw-bold">
+                        <i class="fa-solid fa-chart-pie me-2 text-primary"></i>Ticket Status
+                    </div>
+                    <div class="card-body">
+                        <canvas id="statusChart" style="max-height: 250px;"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 mb-3">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-white fw-bold">
+                        <i class="fa-solid fa-chart-bar me-2 text-success"></i>Tickets by Category
+                    </div>
+                    <div class="card-body">
+                        <canvas id="categoryChart" style="max-height: 250px;"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    
     <script type="module" src="js/admin.js"></script>
 
-    <script>
+    <script type="module">
+        import { getAllTickets } from './js/api.js';
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                // 1. Fetch Data
+                const tickets = await getAllTickets();
+
+                // 2. Prepare Data
+                const statusCounts = { open: 0, in_progress: 0, resolved: 0 };
+                const categoryCounts = {};
+
+                tickets.forEach(t => {
+                    // Count Status
+                    const status = t.status ? t.status.toLowerCase() : "open";
+                    if (statusCounts[status] !== undefined) {
+                        statusCounts[status]++;
+                    }
+
+                    // Count Categories
+                    const cat = t.category || "Uncategorized";
+                    categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
+                });
+
+                // 3. Draw Charts (with safety checks)
+                const statusCanvas = document.getElementById('statusChart');
+                if (statusCanvas) {
+                    new Chart(statusCanvas.getContext('2d'), {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['Open', 'In Progress', 'Resolved'],
+                            datasets: [{
+                                data: [statusCounts.open, statusCounts.in_progress, statusCounts.resolved],
+                                backgroundColor: ['#ffc107', '#0dcaf0', '#198754'], 
+                                hoverOffset: 4
+                            }]
+                        },
+                        options: { maintainAspectRatio: false }
+                    });
+                }
+
+                const categoryCanvas = document.getElementById('categoryChart');
+                if (categoryCanvas) {
+                    new Chart(categoryCanvas.getContext('2d'), {
+                        type: 'bar',
+                        data: {
+                            labels: Object.keys(categoryCounts),
+                            datasets: [{
+                                label: 'Tickets',
+                                data: Object.values(categoryCounts),
+                                backgroundColor: '#0d6efd',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            maintainAspectRatio: false,
+                            scales: {
+                                y: { beginAtZero: true, ticks: { stepSize: 1 } }
+                            }
+                        }
+                    });
+                }
+
+            } catch (error) {
+                console.error("Error loading charts:", error);
+            }
+        });
+
+        // --- THEME & LOGOUT LOGIC ---
         const bodyRoot = document.getElementById('body-root');
         const themeToggle = document.getElementById('theme-toggle');
         const themeIcon = document.getElementById('theme-icon');
@@ -78,8 +177,19 @@
                 localStorage.setItem('theme', 'light');
             }
         }
-        themeToggle.addEventListener('click', () => setTheme(!bodyRoot.classList.contains('dark-theme')));
-        setTheme(localStorage.getItem('theme') === 'dark');
+        
+        if(themeToggle) {
+             themeToggle.addEventListener('click', () => setTheme(!bodyRoot.classList.contains('dark-theme')));
+             setTheme(localStorage.getItem('theme') === 'dark');
+        }
+
+        const logoutBtn = document.getElementById('logoutBtn');
+        if(logoutBtn){
+            logoutBtn.addEventListener('click', () => {
+                localStorage.clear();
+                window.location.href = 'login.html';
+            });
+        }
     </script>
 </body>
 </html>

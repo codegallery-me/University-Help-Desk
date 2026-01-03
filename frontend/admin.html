@@ -1,25 +1,47 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Portal - UniSupport</title>
-    
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="css/styles.css">
-    
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        /* Pulsing Animation for Overdue Tickets */
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
+        }
+
+        .sla-overdue {
+            animation: pulse-red 2s infinite;
+            background-color: #dc3545 !important; /* Red */
+            color: white;
+        }
+
+        .sla-warning {
+            background-color: #ffc107 !important; /* Yellow */
+            color: black;
+        }
+    </style>
 </head>
 
 <body id="body-root">
-    
+
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
             <span class="navbar-brand mb-0 h1 fw-bold">
-                <i class="fa-solid fa-graduation-cap me-2"></i>UniSupport <span class="badge bg-danger ms-2" style="font-size: 0.7em;">ADMIN</span>
+                <i class="fa-solid fa-graduation-cap me-2"></i>UniSupport <span class="badge bg-danger ms-2"
+                    style="font-size: 0.7em;">ADMIN</span>
             </span>
-            
+
             <div class="d-flex align-items-center gap-2 ms-auto">
                 <button id="theme-toggle" class="btn btn-sm btn-outline-light" title="Toggle dark mode">
                     <span id="theme-icon" class="fa-solid fa-moon"></span>
@@ -30,14 +52,15 @@
             </div>
         </div>
     </nav>
-    
+
     <div class="container py-4">
 
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h3 class="mb-0 fw-bold">Ticket Management</h3>
-            
+
             <div class="btn-group">
-                <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown"
+                    aria-expanded="false">
                     <i class="fa-solid fa-download me-2"></i>Export Report
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end">
@@ -47,15 +70,19 @@
             </div>
         </div>
 
-        <div id="bulk-toolbar" class="alert alert-info d-flex justify-content-between align-items-center d-none mb-3 shadow-sm">
+        <div id="bulk-toolbar"
+            class="alert alert-info d-flex justify-content-between align-items-center d-none mb-3 shadow-sm">
             <div>
                 <i class="fa-solid fa-check-double me-2"></i>
                 <span class="fw-bold" id="selected-count">0</span> tickets selected
             </div>
             <div class="btn-group">
-                <button class="btn btn-warning btn-sm fw-bold text-dark" onclick="performBulkAction('open')">Set Open</button>
-                <button class="btn btn-info btn-sm fw-bold text-dark" onclick="performBulkAction('in_progress')">Set Progress</button>
-                <button class="btn btn-success btn-sm fw-bold" onclick="performBulkAction('resolve')">Mark Resolved</button>
+                <button class="btn btn-warning btn-sm fw-bold text-dark" onclick="performBulkAction('open')">Set
+                    Open</button>
+                <button class="btn btn-info btn-sm fw-bold text-dark" onclick="performBulkAction('in_progress')">Set
+                    Progress</button>
+                <button class="btn btn-success btn-sm fw-bold" onclick="performBulkAction('resolve')">Mark
+                    Resolved</button>
                 <button class="btn btn-danger btn-sm fw-bold" onclick="performBulkAction('delete')">
                     <i class="fa-solid fa-trash"></i> Delete
                 </button>
@@ -72,7 +99,7 @@
                                     <input type="checkbox" class="form-check-input cursor-pointer" id="select-all">
                                 </th>
                                 <th class="py-3">ID</th>
-                                <th class="py-3">Title</th>
+                                <th class="py-3">Priority / SLA</th> <th class="py-3">Title</th>
                                 <th class="py-3">Category</th>
                                 <th class="py-3">Status</th>
                                 <th class="py-3">Created</th>
@@ -116,39 +143,86 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    
+
     <script type="module">
         import { getAllTickets } from './js/api.js';
 
         // Global Config
-        const API_URL = "http://localhost:8000"; 
-        
-        // --- 1. INITIALIZATION ---
+        const API_URL = "http://localhost:8000";
+
+        // INITIALIZATION
         document.addEventListener('DOMContentLoaded', async () => {
             await loadDashboardData();
+            
+            // Optional: Refresh SLA timers every minute without reloading page
+            setInterval(loadDashboardData, 60000); 
         });
 
         async function loadDashboardData() {
             try {
                 // Fetch data ONCE for both table and charts
                 const tickets = await getAllTickets();
-                
+
                 renderTable(tickets);
                 renderCharts(tickets);
-                
+
             } catch (error) {
                 console.error("Error loading dashboard:", error);
-                document.getElementById("ticket-table-body").innerHTML = `<tr><td colspan="7" class="text-center text-danger">Error loading data.</td></tr>`;
+                document.getElementById("ticket-table-body").innerHTML = `<tr><td colspan="8" class="text-center text-danger">Error loading data.</td></tr>`;
             }
         }
 
-        // --- 2. TABLE RENDERING & BULK LOGIC ---
+        // SLA HELPER FUNCTION
+        function getSLABadge(ticket) {
+            // If resolved, no timer needed
+            if (ticket.status === 'resolved') {
+                return '<span class="badge bg-light text-success border border-success"><i class="fa-solid fa-check"></i> Done</span>';
+            }
+
+            const priority = ticket.priority || 'Low';
+            
+            // Only High Priority gets the 4-hour countdown
+            if (priority !== 'High') {
+                let color = priority === 'Medium' ? 'text-primary' : 'text-secondary';
+                return `<span class="badge bg-light ${color} border">${priority}</span>`;
+            }
+
+            // COUNTDOWN LOGIC
+            const created = new Date(ticket.created_at);
+            const deadline = new Date(created.getTime() + (4 * 60 * 60 * 1000)); // 4 Hours
+            const now = new Date();
+            const diff = deadline - now;
+
+            // 1. OVERDUE (Time passed)
+            if (diff < 0) {
+                const minsLate = Math.floor(Math.abs(diff) / 60000);
+                const h = Math.floor(minsLate / 60);
+                const m = minsLate % 60;
+                return `
+                    <span class="badge sla-overdue fw-bold">
+                        <i class="fa-solid fa-fire-flame-curved me-1"></i> OVERDUE -${h}h ${m}m
+                    </span>`;
+            } 
+            
+            // RUNNING OUT (Time remaining)
+            else {
+                const minsLeft = Math.floor(diff / 60000);
+                const h = Math.floor(minsLeft / 60);
+                const m = minsLeft % 60;
+                return `
+                    <span class="badge sla-warning fw-bold">
+                        <i class="fa-regular fa-clock me-1"></i> Due in ${h}h ${m}m
+                    </span>`;
+            }
+        }
+
+        // TABLE RENDERING & BULK LOGIC
         function renderTable(tickets) {
             const tbody = document.getElementById("ticket-table-body");
             tbody.innerHTML = "";
 
             if (tickets.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-muted">No tickets found.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="8" class="text-center py-4 text-muted">No tickets found.</td></tr>`;
                 return;
             }
 
@@ -158,13 +232,16 @@
                 if (t.status === "in_progress") badgeClass = "bg-info text-dark";
                 if (t.status === "resolved") badgeClass = "bg-success";
 
+                // Get SLA Badge
+                const slaBadge = getSLABadge(t);
+
                 const row = `
                     <tr>
                         <td class="ps-4">
                             <input type="checkbox" class="form-check-input ticket-checkbox" value="${t._id}">
                         </td>
                         <td class="font-monospace small text-muted">#${t._id.slice(-4)}</td>
-                        <td class="fw-bold">${t.title}</td>
+                        <td>${slaBadge}</td> <td class="fw-bold">${t.title}</td>
                         <td>${t.category}</td>
                         <td><span class="badge ${badgeClass}">${t.status.toUpperCase().replace("_", " ")}</span></td>
                         <td class="small text-muted">${new Date(t.created_at).toLocaleDateString()}</td>
@@ -176,7 +253,6 @@
                 tbody.innerHTML += row;
             });
 
-            // Re-attach listeners to checkboxes after render
             attachCheckboxListeners();
         }
 
@@ -189,7 +265,7 @@
             function updateToolbar() {
                 const checked = document.querySelectorAll('.ticket-checkbox:checked');
                 const count = checked.length;
-                
+
                 countSpan.textContent = count;
                 if (count > 0) {
                     toolbar.classList.remove('d-none');
@@ -200,15 +276,14 @@
             }
 
             checkboxes.forEach(cb => cb.addEventListener('change', updateToolbar));
-            
-            selectAll.addEventListener('change', function() {
+
+            selectAll.addEventListener('change', function () {
                 checkboxes.forEach(cb => { cb.checked = this.checked; });
                 updateToolbar();
             });
         }
 
-        // --- 3. BULK ACTION HANDLER ---
-        // Attached to window so HTML onclick works
+        // BULK ACTION HANDLER
         window.performBulkAction = async (action) => {
             const checkedBoxes = document.querySelectorAll('.ticket-checkbox:checked');
             const ids = Array.from(checkedBoxes).map(cb => cb.value);
@@ -230,7 +305,7 @@
                 if (!res.ok) throw new Error("Bulk action failed");
                 const data = await res.json();
                 alert(data.msg);
-                
+
                 // Hide toolbar and Reload Data
                 document.getElementById('bulk-toolbar').classList.add('d-none');
                 document.getElementById('select-all').checked = false;
@@ -242,7 +317,7 @@
             }
         };
 
-        // --- 4. EXPORT HANDLER ---
+        // EXPORT HANDLER
         window.downloadReport = async (format) => {
             const token = localStorage.getItem("access_token");
             if (!token) { alert("Please login first."); return; }
@@ -274,7 +349,7 @@
             }
         };
 
-        // --- 5. CHART RENDERING ---
+        // CHART RENDERING
         function renderCharts(tickets) {
             const statusCounts = { open: 0, in_progress: 0, resolved: 0 };
             const categoryCounts = {};
@@ -282,7 +357,7 @@
             tickets.forEach(t => {
                 const status = t.status ? t.status.toLowerCase() : "open";
                 if (statusCounts[status] !== undefined) statusCounts[status]++;
-                
+
                 const cat = t.category || "Uncategorized";
                 categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
             });
@@ -290,16 +365,15 @@
             // Status Chart
             const statusCanvas = document.getElementById('statusChart');
             if (statusCanvas) {
-                // Destroy old instance if exists (to prevent overlap on reload)
-                if(window.myStatusChart) window.myStatusChart.destroy();
-                
+                if (window.myStatusChart) window.myStatusChart.destroy();
+
                 window.myStatusChart = new Chart(statusCanvas.getContext('2d'), {
                     type: 'doughnut',
                     data: {
                         labels: ['Open', 'In Progress', 'Resolved'],
                         datasets: [{
                             data: [statusCounts.open, statusCounts.in_progress, statusCounts.resolved],
-                            backgroundColor: ['#ffc107', '#0dcaf0', '#198754'], 
+                            backgroundColor: ['#ffc107', '#0dcaf0', '#198754'],
                             hoverOffset: 4
                         }]
                     },
@@ -310,7 +384,7 @@
             // Category Chart
             const categoryCanvas = document.getElementById('categoryChart');
             if (categoryCanvas) {
-                if(window.myCategoryChart) window.myCategoryChart.destroy();
+                if (window.myCategoryChart) window.myCategoryChart.destroy();
 
                 window.myCategoryChart = new Chart(categoryCanvas.getContext('2d'), {
                     type: 'bar',
@@ -331,7 +405,7 @@
             }
         }
 
-        // --- 6. THEME & LOGOUT ---
+        // THEME & LOGOUT
         const bodyRoot = document.getElementById('body-root');
         const themeToggle = document.getElementById('theme-toggle');
         const themeIcon = document.getElementById('theme-icon');
@@ -349,14 +423,14 @@
                 localStorage.setItem('theme', 'light');
             }
         }
-        
-        if(themeToggle) {
-             themeToggle.addEventListener('click', () => setTheme(!bodyRoot.classList.contains('dark-theme')));
-             setTheme(localStorage.getItem('theme') === 'dark');
+
+        if (themeToggle) {
+            themeToggle.addEventListener('click', () => setTheme(!bodyRoot.classList.contains('dark-theme')));
+            setTheme(localStorage.getItem('theme') === 'dark');
         }
 
         const logoutBtn = document.getElementById('logoutBtn');
-        if(logoutBtn){
+        if (logoutBtn) {
             logoutBtn.addEventListener('click', () => {
                 localStorage.clear();
                 window.location.href = 'login.html';
@@ -364,4 +438,5 @@
         }
     </script>
 </body>
+
 </html>

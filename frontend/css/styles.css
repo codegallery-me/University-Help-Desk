@@ -246,3 +246,21 @@ header.landing-header p {
   background-color: #ff6b6b;
   color: #121212;
 }
+
+/* Pulsing Animation for Overdue Tickets */
+@keyframes pulse-red {
+    0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
+}
+
+.sla-overdue {
+    animation: pulse-red 2s infinite;
+    background-color: #dc3545 !important; /* Red */
+    color: white;
+}
+
+.sla-warning {
+    background-color: #ffc107 !important; /* Yellow */
+    color: black;
+}

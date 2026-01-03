@@ -350,6 +350,69 @@
             window.location.href = "login.html";
         });
 
+
+
+        // REAL-TIME COMMENTS
+const ws = new WebSocket("ws://localhost:8000/ws");
+
+ws.onmessage = function(event) {
+    const data = JSON.parse(event.data);
+
+    // Check if the message is a comment AND belongs to THIS ticket
+    if (data.type === "new_comment" && data.ticket_id === ticketId) {
+        appendNewComment(data);
+    }
+    // Also update status badge if it changes while we are watching
+    if (data.type === "status_change" && data.ticket_id === ticketId) {
+        updateStatusBadge(data.new_status);
+    }
+};
+
+function appendNewComment(data) {
+    const container = document.getElementById("comments-container");
+    
+    // Remove "No comments" text if it exists
+    if (container.innerText.includes("No comments yet")) {
+        container.innerHTML = "";
+    }
+
+    const dateStr = new Date(data.created_at).toLocaleString();
+
+    const html = `
+        <div class="card mb-3 border-0 bg-light animate-fade-in">
+            <div class="card-body p-3">
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="fw-bold text-primary">${data.owner_name} <span class="badge bg-danger ms-2">NEW</span></span>
+                    <small class="text-muted">${dateStr}</small>
+                </div>
+                <p class="mb-0 text-dark" style="white-space: pre-wrap;">${data.text}</p>
+            </div>
+        </div>
+    `;
+    
+    // Add to top or bottom? Usually bottom for chat flow.
+    container.innerHTML += html;
+    
+}
+
+function updateStatusBadge(status) {
+    const statusEl = document.getElementById("ticket-status");
+    statusEl.innerText = status.replace("_", " ").toUpperCase();
+    statusEl.className = "badge fs-6 border"; 
+    
+    if(status === "open") statusEl.classList.add("bg-warning", "text-dark", "border-warning");
+    else if(status === "in_progress") statusEl.classList.add("bg-info", "text-dark", "border-info");
+    else if(status === "resolved") statusEl.classList.add("bg-success", "border-success");
+}
+
+// Add simple animation CSS
+const style = document.createElement('style');
+style.innerHTML = `
+    .animate-fade-in { animation: fadeIn 0.5s; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+`;
+document.head.appendChild(style);
+
         loadTicket();
         loadComments();
         initAdminTools();

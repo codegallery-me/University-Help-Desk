@@ -24,6 +24,7 @@ from database import faq_collection
 from models import FAQItem
 from database import canned_responses_collection
 from models import CannedResponse
+from fastapi import WebSocket, WebSocketDisconnect
 
 # Import your DB and Models
 from database import users_collection, tickets_collection, comments_collection, audit_collection
@@ -54,6 +55,29 @@ mail_conf = ConnectionConfig(
     USE_CREDENTIALS=True,
     VALIDATE_CERTS=True
 )
+
+# WEBSOCKET MANAGER
+class ConnectionManager:
+    def __init__(self):
+        # List of active connections
+        self.active_connections: List[WebSocket] = []
+
+    async def connect(self, websocket: WebSocket):
+        await websocket.accept()
+        self.active_connections.append(websocket)
+
+    def disconnect(self, websocket: WebSocket):
+        self.active_connections.remove(websocket)
+
+    async def broadcast(self, message: dict):
+        # Send a message to ALL connected users
+        for connection in self.active_connections:
+            try:
+                await connection.send_json(message)
+            except:
+                pass # Handle broken connections gracefully
+
+manager = ConnectionManager()
 
 app = FastAPI()
 
@@ -228,6 +252,16 @@ async def update_ticket_status(id: str, status_update: dict, current_user: UserI
     result = await tickets_collection.update_one({"_id": obj_id}, {"$set": {"status": new_status}})
     if result.modified_count == 0:
         raise HTTPException(status_code=404, detail="Ticket not found or no change made")
+    
+    
+    # 🔔 REAL-TIME NOTIFICATION
+    await manager.broadcast({
+        "type": "status_change",
+        "ticket_id": id,
+        "new_status": new_status
+    })
+    
+    return {"msg": "Status updated successfully"}
     return {"msg": "Status updated successfully"}
 
 # 📝 AUDIT LOG
@@ -273,7 +307,18 @@ async def create_comment(ticket_id: str, comment: CommentCreate, current_user: U
     comment_data["created_at"] = datetime.utcnow()
 
     new_comment = await comments_collection.insert_one(comment_data)
+ 
     created_comment = await comments_collection.find_one({"_id": new_comment.inserted_id})
+    
+    # 🔔 REAL-TIME NOTIFICATION
+    await manager.broadcast({
+        "type": "new_comment",
+        "ticket_id": ticket_id,
+        "owner_name": current_user.full_name,
+        "text": comment.text,
+        "created_at": str(datetime.utcnow())
+    })
+
     return created_comment
 
 @app.get("/tickets/{ticket_id}/comments", response_model=List[CommentInDB])
@@ -663,3 +708,15 @@ async def delete_canned_response(id: str, current_user: UserInDB = Depends(get_c
     
     await canned_responses_collection.delete_one({"_id": ObjectId(id)})
     return {"msg": "Deleted"}
+
+
+# WEBSOCKET ENDPOINT
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await manager.connect(websocket)
+    try:
+        while True:
+            # Keep connection alive (we just listen here)
+            data = await websocket.receive_text()
+    except WebSocketDisconnect:
+        manager.disconnect(websocket)

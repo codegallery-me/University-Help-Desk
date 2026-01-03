@@ -265,6 +265,42 @@
             localStorage.clear();
             window.location.href = "login.html";
         });
+
+        // REAL TIME WEBSOCKETS 
+const ws = new WebSocket("ws://localhost:8000/ws");
+
+ws.onmessage = function(event) {
+    const data = JSON.parse(event.data);
+
+    // Only care about Status Changes
+    if (data.type === "status_change") {
+        updateTicketRow(data.ticket_id, data.new_status);
+    }
+};
+
+function updateTicketRow(ticketId, newStatus) {
+    // Note: We need to look for the ID in the text content
+    const rows = document.querySelectorAll("#ticket-table-body tr");
+    
+    rows.forEach(row => {
+        const idCell = row.cells[0]; // First column is ID
+        if (idCell && idCell.innerText.includes(ticketId.slice(-4))) {
+            
+            // 2. Update the Status Badge (4th column, index 3)
+            const statusCell = row.cells[3];
+            let badgeClass = "bg-secondary";
+            if (newStatus === "open") badgeClass = "bg-warning text-dark";
+            if (newStatus === "in_progress") badgeClass = "bg-info text-dark";
+            if (newStatus === "resolved") badgeClass = "bg-success";
+
+            statusCell.innerHTML = `<span class="badge ${badgeClass}">${newStatus.toUpperCase().replace("_", " ")}</span>`;
+            
+            // Optional: Highlight row briefly
+            row.style.backgroundColor = "#fff3cd";
+            setTimeout(() => row.style.backgroundColor = "", 1000);
+        }
+    });
+}
     </script>
 </body>
 </html>

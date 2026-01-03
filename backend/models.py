@@ -41,3 +41,7 @@ class CommentInDB(CommentCreate):
     owner_id: str
     owner_name: str
     created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class UserUpdate(BaseModel):
+    full_name: str | None = None
+    phone_number: str | None = None

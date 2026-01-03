@@ -6,6 +6,12 @@ from jose import JWTError, jwt
 from datetime import datetime, timedelta
 from typing import List
 from bson import ObjectId
+from google.oauth2 import id_token
+from google.auth.transport import requests as google_requests
+import secrets # to generate random passwords for google users
+import os
+from dotenv import load_dotenv
+from models import UserUpdate
 
 # Import your DB and Models
 from database import users_collection, tickets_collection, comments_collection
@@ -17,6 +23,16 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 app = FastAPI()
+
+# 1. Load Environment Variables
+load_dotenv()
+
+# 2. Get the Client ID securely
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
+
+# Safety Check: Stop server start-up if ID is missing
+if not GOOGLE_CLIENT_ID:
+    raise ValueError("❌ CRITICAL ERROR: GOOGLE_CLIENT_ID is missing from .env file")
 
 # CORS (Allow Frontend) - must be set immediately after FastAPI()!
 origins = [
@@ -208,3 +224,91 @@ async def create_comment(ticket_id: str, comment: CommentCreate, current_user: U
 async def read_comments(ticket_id: str):
     comments = await comments_collection.find({"ticket_id": ticket_id}).to_list(100)
     return comments
+
+@app.post("/auth/google")
+async def google_login(token_data: dict):
+    """
+    Securely verifies Google Token and logs in (or registers) the user.
+    """
+    token = token_data.get("token")
+    
+    try:
+        # 🛡️ SECURITY STEP 1: Verify the token with Google's servers
+        # This checks the signature and ensures the token hasn't been tampered with.
+        # It ALSO checks that the 'aud' (audience) matches YOUR_CLIENT_ID.
+        idinfo = id_token.verify_oauth2_token(
+            token, 
+            google_requests.Request(), 
+            GOOGLE_CLIENT_ID
+        )
+
+        # 🛡️ SECURITY STEP 2: Issuer Check
+        # Ensure the token really came from Google (accounts.google.com)
+        if idinfo['iss'] not in ['accounts.google.com', 'https://accounts.google.com']:
+            raise ValueError('Wrong issuer.')
+
+        # 3. Get User Info
+        email = idinfo['email']
+        name = idinfo.get('name', 'Google User')
+        
+        # 4. Check Database
+        user = await users_collection.find_one({"email": email})
+
+        if not user:
+            # Register new user
+            # We generate a 32-byte random password so no one can bruteforce it
+            random_password = secrets.token_urlsafe(32)
+            
+            new_user = {
+                "email": email,
+                "full_name": name,
+                "hashed_password": get_password_hash(random_password), 
+                "role": "student", 
+                "auth_provider": "google"
+            }
+            result = await users_collection.insert_one(new_user)
+            user = await users_collection.find_one({"_id": result.inserted_id})
+
+        # 5. Create JWT (Session Token)
+        access_token = create_access_token(
+            data={"sub": user["email"], "role": user["role"]}
+        )
+
+        return {
+            "access_token": access_token,
+            "token_type": "bearer",
+            "role": user["role"],
+            "user_id": str(user["_id"])
+        }
+
+    except ValueError as e:
+        # Log the error for the admin to see, but give a generic error to the user
+        print(f"⚠️ Google Auth Error: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, 
+            detail="Invalid Google Token or Security Check Failed"
+        )
+    
+# USER PROFILE ENDPOINTS 
+
+@app.get("/users/me", response_model=UserInDB)
+async def read_users_me(current_user: UserInDB = Depends(get_current_user)):
+    """
+    Get current user details
+    """
+    return current_user
+
+@app.patch("/users/me")
+async def update_user_me(user_update: UserUpdate, current_user: UserInDB = Depends(get_current_user)):
+    """
+    Update current user's profile (Name, Phone)
+    """
+    update_data = {k: v for k, v in user_update.dict().items() if v is not None}
+    
+    if len(update_data) >= 1:
+        await users_collection.update_one(
+            {"_id": current_user.id}, 
+            {"$set": update_data}
+        )
+    
+    return {"msg": "Profile updated successfully"}

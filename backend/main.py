@@ -22,6 +22,8 @@ from models import BulkActionRequest
 from bson import Regex
 from database import faq_collection
 from models import FAQItem
+from database import canned_responses_collection
+from models import CannedResponse
 
 # Import your DB and Models
 from database import users_collection, tickets_collection, comments_collection, audit_collection
@@ -634,3 +636,30 @@ async def seed_faqs():
     ]
     await faq_collection.insert_many(sample_data)
     return {"msg": "FAQ data added!"}
+
+@app.post("/admin/canned-responses")
+async def create_canned_response(response: CannedResponse, current_user: UserInDB = Depends(get_current_user)):
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admins only")
+    
+    await canned_responses_collection.insert_one(response.dict())
+    return {"msg": "Response saved"}
+
+@app.get("/admin/canned-responses")
+async def get_canned_responses(current_user: UserInDB = Depends(get_current_user)):
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admins only")
+        
+    responses = await canned_responses_collection.find().to_list(100)
+    # Convert _id to string
+    for r in responses:
+        r["_id"] = str(r["_id"])
+    return responses
+
+@app.delete("/admin/canned-responses/{id}")
+async def delete_canned_response(id: str, current_user: UserInDB = Depends(get_current_user)):
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admins only")
+    
+    await canned_responses_collection.delete_one({"_id": ObjectId(id)})
+    return {"msg": "Deleted"}

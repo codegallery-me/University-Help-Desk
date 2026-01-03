@@ -67,3 +67,10 @@ class FAQItem(BaseModel):
     answer: str
     keywords: List[str] # e.g., ["wifi", "internet", "connection"]
     category: str
+
+class CannedResponse(BaseModel):
+    title: str    # e.g., "Wi-Fi Reset"
+    content: str  # e.g., "Please go to Settings > Network > Forget..."
+
+class CannedResponseInDB(CannedResponse):
+    id: str = Field(alias="_id")

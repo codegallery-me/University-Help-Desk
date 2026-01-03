@@ -21,3 +21,4 @@ tickets_collection = db.tickets
 comments_collection = db.comments
 audit_collection = db["audit_logs"]
 faq_collection = db.get_collection("faq")
+canned_responses_collection = db.get_collection("canned_responses")

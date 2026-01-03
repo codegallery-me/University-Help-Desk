@@ -1,58 +1,178 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create Ticket - UniSupport</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="css/styles.css">
 </head>
+
 <body class="bg-light">
 
-    <nav class="navbar navbar-dark bg-primary mb-4">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm mb-4">
         <div class="container">
-            <span class="navbar-brand mb-0 h1">UniSupport 🎓</span>
-            <a href="dashboard.html" class="btn btn-light btn-sm">Back to Dashboard</a>
+            <a class="navbar-brand fw-bold" href="dashboard.html"><i
+                    class="fa-solid fa-graduation-cap me-2"></i>UniSupport</a>
+            <a href="dashboard.html" class="btn btn-outline-light btn-sm">Back to Dashboard</a>
         </div>
     </nav>
 
-    <div class="container d-flex justify-content-center">
-        <div class="card shadow" style="width: 100%; max-width: 600px;">
-            <div class="card-header bg-white text-center py-3">
-                <h3 class="mb-0">Create New Ticket</h3>
-                <small class="text-muted">Describe your issue clearly</small>
-            </div>
-            <div class="card-body">
-                
-                <form id="create-ticket-form">
-                    
-                    <div class="mb-3">
-                        <label for="title" class="form-label">Title</label>
-                        <input type="text" class="form-control" id="title" placeholder="e.g., Projector Broken in Lab 1" required>
-                    </div>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
 
-                    <div class="mb-3">
-                        <label for="category" class="form-label">Category</label>
-                        <select class="form-select" id="category" required>
-                            <option value="" disabled selected>Select category</option>
-                            <option value="it">IT Support</option>
-                            <option value="facility">Facility / Maintenance</option>
-                            <option value="academic">Academic Inquiry</option>
-                        </select>
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white py-3">
+                        <h4 class="mb-0 fw-bold">Submit a New Ticket</h4>
                     </div>
+                    <div class="card-body p-4">
 
-                    <div class="mb-3">
-                        <label for="description" class="form-label">Description</label>
-                        <textarea class="form-control" id="description" rows="5" placeholder="Explain the issue in detail..." required></textarea>
+                        <form id="ticket-form">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Category</label>
+                                <select id="category" class="form-select" required>
+                                    <option value="" selected disabled>Select a category...</option>
+                                    <option value="IT Support">IT Support (Wi-Fi, Login)</option>
+                                    <option value="Facility">Facility (AC, Furniture)</option>
+                                    <option value="Academic">Academic (Grades, Enrollment)</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3 position-relative">
+                                <label class="form-label fw-bold">Subject</label>
+                                <input type="text" id="title" class="form-control"
+                                    placeholder="e.g. Wi-Fi isn't working" required autocomplete="off">
+
+                                <div id="faq-suggestions" class="list-group mt-2 shadow-sm d-none">
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Priority</label>
+                                <select id="priority" class="form-select">
+                                    <option value="Low">Low</option>
+                                    <option value="Medium" selected>Medium</option>
+                                    <option value="High">High</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">Description</label>
+                                <textarea id="description" class="form-control" rows="5"
+                                    placeholder="Describe your issue in detail..." required></textarea>
+                            </div>
+
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary fw-bold py-2">Submit Ticket</button>
+                            </div>
+                        </form>
+
                     </div>
-
-                    <button type="submit" class="btn btn-primary w-100">Submit Ticket</button>
-                </form>
+                </div>
 
             </div>
         </div>
     </div>
 
-    <script type="module" src="js/ticket.js"></script>
+    <script>
+        const API_URL = "https://uni-help-desk.onrender.com";
+        const token = localStorage.getItem("access_token");
+        if (!token) window.location.href = "login.html";
+
+        const titleInput = document.getElementById('title');
+        const suggestionsBox = document.getElementById('faq-suggestions');
+
+        // 1. SMART SEARCH LOGIC (Debounce)
+        let timeout = null;
+
+        titleInput.addEventListener('input', function () {
+            const query = this.value.trim();
+
+            // Clear previous timer
+            clearTimeout(timeout);
+
+            // Hide if empty
+            if (query.length < 3) {
+                suggestionsBox.classList.add('d-none');
+                return;
+            }
+
+            // Wait 500ms after typing stops before searching (saves server load)
+            timeout = setTimeout(() => fetchSuggestions(query), 500);
+        });
+
+        async function fetchSuggestions(query) {
+            try {
+                const res = await fetch(`${API_URL}/faq/search?q=${query}`);
+                const faqs = await res.json();
+
+                if (faqs.length > 0) {
+                    suggestionsBox.innerHTML = `
+                        <div class="list-group-item list-group-item-warning fw-bold small text-uppercase">
+                            <i class="fa-solid fa-lightbulb me-2"></i>Suggested Solutions
+                        </div>
+                    `;
+
+                    faqs.forEach(faq => {
+                        suggestionsBox.innerHTML += `
+                            <div class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1 fw-bold text-primary">${faq.question}</h6>
+                                </div>
+                                <p class="mb-1 small text-muted">${faq.answer}</p>
+                            </div>
+                        `;
+                    });
+
+                    suggestionsBox.classList.remove('d-none');
+                } else {
+                    suggestionsBox.classList.add('d-none');
+                }
+            } catch (err) {
+                console.error("Search error", err);
+            }
+        }
+
+        // 2. SUBMIT TICKET LOGIC (Original)
+        document.getElementById('ticket-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const btn = e.target.querySelector('button');
+            btn.disabled = true;
+            btn.textContent = "Submitting...";
+
+            const ticketData = {
+                title: document.getElementById('title').value,
+                category: document.getElementById('category').value,
+                priority: document.getElementById('priority').value,
+                description: document.getElementById('description').value
+            };
+
+            try {
+                const res = await fetch(`${API_URL}/tickets/`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    },
+                    body: JSON.stringify(ticketData)
+                });
+
+                if (!res.ok) throw new Error("Failed");
+
+                alert("Ticket Created Successfully!");
+                window.location.href = "dashboard.html";
+
+            } catch (err) {
+                alert("Error creating ticket");
+                btn.disabled = false;
+                btn.textContent = "Submit Ticket";
+            }
+        });
+    </script>
 </body>
+
 </html>

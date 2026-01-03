@@ -1,59 +1,313 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - UniSupport</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="css/styles.css">
 </head>
-<body class="bg-light">
 
-    <nav class="navbar navbar-dark bg-primary mb-4">
+<body id="body-root">
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm mb-4">
         <div class="container">
-            <span class="navbar-brand mb-0 h1">UniSupport 🎓</span>
-            <a href="login.html" class="btn btn-light btn-sm">Logout</a>
+            <a class="navbar-brand fw-bold" href="dashboard.html"><i
+                    class="fa-solid fa-graduation-cap me-2"></i>UniSupport</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+                <ul class="navbar-nav align-items-center">
+                    <li class="nav-item"><a class="nav-link active" href="dashboard.html">Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link" href="profile.html">Profile</a></li>
+                    <li class="nav-item ms-lg-3">
+                        <button id="logoutBtn" class="btn btn-danger btn-sm fw-bold">Logout</button>
+                    </li>
+                </ul>
+            </div>
         </div>
     </nav>
 
-    <div class="container">
+    <div class="container py-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h3 class="mb-0">My Tickets</h3>
-            <a href="create-ticket.html" class="btn btn-success">
-                + New Ticket
-            </a>
+            <h2 class="fw-bold mb-0">My Tickets</h2>
+            <div class="d-flex gap-2">
+                <button id="theme-toggle" class="btn btn-outline-secondary bg-white text-dark" title="Toggle dark mode">
+                    <span id="theme-icon" class="fa-solid fa-moon"></span>
+                </button>
+                <a href="create-ticket.html" class="btn btn-primary shadow-sm">
+                    <i class="fa-solid fa-plus me-1"></i> New Ticket
+                </a>
+            </div>
         </div>
 
-        <div class="card shadow-sm rounded">
+        <div class="card shadow-sm border-0 overflow-hidden">
             <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-hover mb-0">
-                        <thead class="table-light">
+                    <table class="table table-hover mb-0 align-middle">
+                        <thead class="bg-light">
                             <tr>
-                                <th class="ps-4">ID</th>
-                                <th>Title</th>
-                                <th>Category</th>
-                                <th>Status</th>
-                                <th>Created</th>
+                                <th class="ps-4 py-3 text-secondary small fw-bold text-uppercase">ID</th>
+                                <th class="py-3 text-secondary small fw-bold text-uppercase">Title</th>
+                                <th class="py-3 text-secondary small fw-bold text-uppercase">Category</th>
+                                <th class="py-3 text-secondary small fw-bold text-uppercase">Status</th>
+                                <th class="py-3 text-secondary small fw-bold text-uppercase">Created</th>
+                                <th class="py-3 text-secondary small fw-bold text-uppercase">Action</th>
                             </tr>
                         </thead>
                         <tbody id="ticket-table-body">
-                        <!-- Data loaded by JS -->
-                    </tbody>
-                        
+                            <tr>
+                                <td colspan="6" class="text-center py-4 text-muted">Loading tickets...</td>
+                            </tr>
+                        </tbody>
                     </table>
                 </div>
-
-               
-               
             </div>
         </div>
     </div>
 
-    
-   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <div class="modal fade" id="ratingModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold">Rate Your Experience</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <p class="text-muted">How was the service for this ticket?</p>
 
-    <script type="module" src="js/dashboard.js"></script>
+                    <div class="rating-stars mb-3" style="font-size: 2rem; cursor: pointer; color: #ddd;">
+                        <i class="fa-solid fa-star" data-value="1"></i>
+                        <i class="fa-solid fa-star" data-value="2"></i>
+                        <i class="fa-solid fa-star" data-value="3"></i>
+                        <i class="fa-solid fa-star" data-value="4"></i>
+                        <i class="fa-solid fa-star" data-value="5"></i>
+                    </div>
+                    <input type="hidden" id="ratingValue" value="0">
 
+                    <textarea id="ratingComment" class="form-control" rows="3"
+                        placeholder="Any additional comments? (Optional)"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="submitRating()">Submit Review</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script type="module">
+        // --- CONFIG ---
+        const API_URL = "https://uni-help-desk.onrender.com"; // Or your Render URL
+        const token = localStorage.getItem("access_token");
+
+        // Auth Check
+        if (!token) window.location.href = "login.html";
+
+        // --- TICKET FETCHING & RENDERING ---
+        async function loadTickets() {
+            try {
+                const res = await fetch(`${API_URL}/tickets/my_tickets`, {
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+
+                if (!res.ok) throw new Error("Failed to load tickets");
+
+                const tickets = await res.json();
+                const tbody = document.getElementById("ticket-table-body");
+                tbody.innerHTML = "";
+
+                if (tickets.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="6" class="text-center py-5 text-muted">No tickets found. Create one!</td></tr>`;
+                    return;
+                }
+
+                tickets.forEach(ticket => {
+                    const date = new Date(ticket.created_at).toLocaleDateString();
+
+                    // Status Badge Logic
+                    let badgeClass = "bg-secondary";
+                    if (ticket.status === "open") badgeClass = "bg-warning text-dark";
+                    if (ticket.status === "in_progress") badgeClass = "bg-info text-dark";
+                    if (ticket.status === "resolved") badgeClass = "bg-success";
+
+                    // ⭐ RATING BUTTON LOGIC
+                    let actionHtml = `<a href="ticket-detail.html?id=${ticket._id}" class="btn btn-sm btn-outline-primary">View</a>`;
+
+                    if (ticket.status === 'resolved' && !ticket.rating) {
+                        // Show "Rate Us" button if resolved and not yet rated
+                        actionHtml += `
+                            <button class="btn btn-warning btn-sm ms-2 fw-bold text-dark" onclick="openRatingModal('${ticket._id}')">
+                                <i class="fa-solid fa-star"></i> Rate
+                            </button>
+                        `;
+                    } else if (ticket.rating) {
+                        // Show existing rating
+                        actionHtml += `
+                            <span class="ms-2 badge bg-light text-warning border border-warning">
+                                ${ticket.rating} <i class="fa-solid fa-star"></i>
+                            </span>
+                        `;
+                    }
+
+                    const row = `
+                        <tr>
+                            <td class="ps-4 font-monospace small text-muted">#${ticket._id.slice(-6)}</td>
+                            <td class="fw-bold text-dark">${ticket.title}</td>
+                            <td><span class="badge bg-light text-secondary border">${ticket.category}</span></td>
+                            <td><span class="badge ${badgeClass}">${ticket.status.replace('_', ' ').toUpperCase()}</span></td>
+                            <td class="text-muted small">${date}</td>
+                            <td>${actionHtml}</td>
+                        </tr>
+                    `;
+                    tbody.innerHTML += row;
+                });
+
+            } catch (err) {
+                console.error(err);
+                document.getElementById("ticket-table-body").innerHTML = `<tr><td colspan="6" class="text-center text-danger">Error loading tickets.</td></tr>`;
+            }
+        }
+
+        // Initialize
+        loadTickets();
+
+        // --- RATING SYSTEM LOGIC ---
+        let currentTicketIdToRate = null;
+
+        // Make functions global so HTML onclick works
+        window.openRatingModal = (ticketId) => {
+            currentTicketIdToRate = ticketId;
+            // Reset UI
+            document.getElementById('ratingValue').value = 0;
+            document.getElementById('ratingComment').value = "";
+            document.querySelectorAll('.rating-stars i').forEach(s => s.style.color = '#ddd');
+
+            // Show Modal
+            const modalEl = document.getElementById('ratingModal');
+            const modal = new bootstrap.Modal(modalEl);
+            modal.show();
+        };
+
+        window.submitRating = async () => {
+            const rating = document.getElementById('ratingValue').value;
+            const comment = document.getElementById('ratingComment').value;
+
+            if (rating == 0) {
+                alert("Please select at least one star.");
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_URL}/tickets/${currentTicketIdToRate}/feedback`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ rating: parseInt(rating), comment: comment })
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.detail || "Failed");
+                }
+
+                alert("Thank you for your feedback!");
+                // Close modal (reload page to refresh table)
+                location.reload();
+
+            } catch (err) {
+                console.error(err);
+                alert("Error submitting feedback: " + err.message);
+            }
+        };
+
+        // Star Click Handler
+        document.querySelectorAll('.rating-stars i').forEach(star => {
+            star.addEventListener('click', function () {
+                const value = this.getAttribute('data-value');
+                document.getElementById('ratingValue').value = value;
+
+                // Color stars
+                document.querySelectorAll('.rating-stars i').forEach(s => {
+                    if (s.getAttribute('data-value') <= value) {
+                        s.style.color = '#ffc107'; // Yellow
+                    } else {
+                        s.style.color = '#ddd'; // Gray
+                    }
+                });
+            });
+        });
+
+
+        // --- THEME & LOGOUT LOGIC ---
+        const bodyRoot = document.getElementById('body-root');
+        const themeToggle = document.getElementById('theme-toggle');
+        const themeIcon = document.getElementById('theme-icon');
+
+        function setTheme(dark) {
+            if (dark) {
+                bodyRoot.classList.add('dark-theme');
+                themeIcon.classList.remove('fa-moon');
+                themeIcon.classList.add('fa-sun');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                bodyRoot.classList.remove('dark-theme');
+                themeIcon.classList.remove('fa-sun');
+                themeIcon.classList.add('fa-moon');
+                localStorage.setItem('theme', 'light');
+            }
+        }
+        themeToggle.addEventListener('click', () => setTheme(!bodyRoot.classList.contains('dark-theme')));
+        setTheme(localStorage.getItem('theme') === 'dark');
+
+        document.getElementById("logoutBtn").addEventListener("click", () => {
+            localStorage.clear();
+            window.location.href = "login.html";
+        });
+
+        // REAL TIME WEBSOCKETS 
+        const ws = new WebSocket("ws://localhost:8000/ws");
+
+        ws.onmessage = function (event) {
+            const data = JSON.parse(event.data);
+
+            // Only care about Status Changes
+            if (data.type === "status_change") {
+                updateTicketRow(data.ticket_id, data.new_status);
+            }
+        };
+
+        function updateTicketRow(ticketId, newStatus) {
+            // Note: We need to look for the ID in the text content
+            const rows = document.querySelectorAll("#ticket-table-body tr");
+
+            rows.forEach(row => {
+                const idCell = row.cells[0]; // First column is ID
+                if (idCell && idCell.innerText.includes(ticketId.slice(-4))) {
+
+                    // 2. Update the Status Badge (4th column, index 3)
+                    const statusCell = row.cells[3];
+                    let badgeClass = "bg-secondary";
+                    if (newStatus === "open") badgeClass = "bg-warning text-dark";
+                    if (newStatus === "in_progress") badgeClass = "bg-info text-dark";
+                    if (newStatus === "resolved") badgeClass = "bg-success";
+
+                    statusCell.innerHTML = `<span class="badge ${badgeClass}">${newStatus.toUpperCase().replace("_", " ")}</span>`;
+
+                    // Optional: Highlight row briefly
+                    row.style.backgroundColor = "#fff3cd";
+                    setTimeout(() => row.style.backgroundColor = "", 1000);
+                }
+            });
+        }
+    </script>
 </body>
+
 </html>

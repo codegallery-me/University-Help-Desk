@@ -58,10 +58,10 @@ async function loadTickets() {
 
 loadTickets();
 
+
 tableBody.addEventListener("click",(e)=>{
     const row=e.target.closest("tr");
     if(!row||!row.dataset.id) return;
 
     window.location.href= `ticket-detail.html?id=${row.dataset.id}`;
 });
-

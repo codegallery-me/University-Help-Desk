@@ -12,3 +12,8 @@ ENV/
 backend/.env
 node_modules
 package-lock.json
+create_issues.py
+
+# Environment variables
+.env
+backend/.env

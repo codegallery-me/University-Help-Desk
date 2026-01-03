@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile - UniSupport</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body class="bg-light">
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="dashboard.html"><i
+                    class="fa-solid fa-graduation-cap me-2"></i>UniSupport</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item"><a class="nav-link" href="dashboard.html">Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="#">Profile</a></li>
+                    <li class="nav-item"><button class="btn btn-danger btn-sm ms-3" id="logoutBtn">Logout</button></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6">
+
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white border-bottom-0 pt-4 pb-0 text-center">
+                        <div class="avatar-circle bg-primary text-white d-flex align-items-center justify-content-center mx-auto mb-3"
+                            style="width: 80px; height: 80px; font-size: 2rem; border-radius: 50%;">
+                            <i class="fa-solid fa-user"></i>
+                        </div>
+                        <h4 id="display-name" class="fw-bold">Loading...</h4>
+                        <p id="display-role"
+                            class="text-muted badge bg-secondary bg-opacity-10 text-secondary px-3 py-1 rounded-pill">
+                            Student</p>
+                    </div>
+
+                    <div class="card-body p-4">
+                        <form id="profile-form">
+                            <div class="mb-3">
+                                <label class="form-label text-muted small fw-bold">EMAIL ADDRESS</label>
+                                <input type="email" id="email" class="form-control bg-light" readonly disabled>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label text-muted small fw-bold">FULL NAME</label>
+                                <input type="text" id="full_name" class="form-control" required>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label text-muted small fw-bold">PHONE NUMBER</label>
+                                <input type="tel" id="phone_number" class="form-control" placeholder="+94 77 123 4567">
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary fw-bold">
+                                    <i class="fa-solid fa-save me-2"></i>Save Changes
+                                </button>
+                                <a href="dashboard.html" class="btn btn-outline-secondary">Cancel</a>
+                            </div>
+
+                            <div id="statusMessage" class="alert mt-3 d-none text-center" role="alert"></div>
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // CONFIG
+        const API_URL = "https://uni-help-desk.onrender.com"; // Or your Render URL
+        const token = localStorage.getItem("access_token");
+
+        if (!token) window.location.href = "login.html";
+
+        // DOM Elements
+        const fullNameInput = document.getElementById("full_name");
+        const emailInput = document.getElementById("email");
+        const phoneInput = document.getElementById("phone_number");
+        const displayName = document.getElementById("display-name");
+        const displayRole = document.getElementById("display-role");
+        const form = document.getElementById("profile-form");
+        const statusMessage = document.getElementById("statusMessage");
+
+        // 1. Fetch User Data on Load
+        async function loadProfile() {
+            try {
+                const res = await fetch(`${API_URL}/users/me`, {
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+
+                if (!res.ok) throw new Error("Failed to load profile");
+
+                const user = await res.json();
+
+                // Populate Fields
+                fullNameInput.value = user.full_name;
+                emailInput.value = user.email;
+                phoneInput.value = user.phone_number || ""; // Handle empty phone
+
+                // Update Header
+                displayName.textContent = user.full_name;
+                displayRole.textContent = user.role.toUpperCase();
+
+            } catch (err) {
+                console.error(err);
+                alert("Session expired or error loading data.");
+                window.location.href = "login.html";
+            }
+        }
+
+        loadProfile();
+
+        // 2. Handle Update
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            statusMessage.classList.add('d-none');
+
+            const btn = form.querySelector("button[type='submit']");
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin me-2"></i>Saving...`;
+
+            const updateData = {
+                full_name: fullNameInput.value,
+                phone_number: phoneInput.value
+            };
+
+            try {
+                const res = await fetch(`${API_URL}/users/me`, {
+                    method: "PATCH",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    },
+                    body: JSON.stringify(updateData)
+                });
+
+                if (!res.ok) throw new Error("Failed to update profile");
+
+                // Update UI Feedback
+                displayName.textContent = fullNameInput.value;
+                statusMessage.textContent = "Profile updated successfully!";
+                statusMessage.className = "alert mt-3 alert-success";
+                statusMessage.classList.remove("d-none");
+
+            } catch (err) {
+                statusMessage.textContent = "Error updating profile.";
+                statusMessage.className = "alert mt-3 alert-danger";
+                statusMessage.classList.remove("d-none");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        });
+
+        // Logout Logic
+        document.getElementById("logoutBtn").addEventListener("click", () => {
+            localStorage.clear();
+            window.location.href = "login.html";
+        });
+    </script>
+</body>
+
+</html>

@@ -1,6 +1,4 @@
-# 🎓 University Help Desk
-
-A full-stack **Student Support Ticket System** designed to streamline communication between university students and support staff. This application allows students to report issues (IT, Facility, Academic), track their resolution status in real-time, and provides a secure, role-based environment for managing inquiries.
+# 🚀 Help Desk Platform v2 -- Enterprise Upgrade
 
 ![Project Status](https://img.shields.io/badge/status-active-success.svg)
 ![Python Version](https://img.shields.io/badge/python-3.12-blue.svg)
@@ -9,37 +7,119 @@ A full-stack **Student Support Ticket System** designed to streamline communicat
 
 ---
 
-## ✨ Features
+## Summary
 
-### 🔐 Authentication & Security
-* **User Registration:** Secure sign-up flow for students with full name, email, and password.
-* **JWT Authentication:** Implements OAuth2 with Password (Bearer) flow for secure session management.
-* **Password Hashing:** Uses `bcrypt` and `passlib` to encrypt user passwords before storage.
-* **Auto-Logout:** Frontend automatically handles expired tokens for security.
+This PR introduces the **v2 "Enterprise" Upgrade**, significantly
+enhancing the platform's security, interactivity, and administrative
+capabilities. The system transitions from a basic CRUD application into
+a **production-ready Help Desk** with real-time updates, role-based
+automation, and analytics.
 
-### 🎫 Ticket Management
-* **Create Tickets:** Simple interface to submit issues with specific categories (IT Support, Facility, Academic).
-* **Real-time Dashboard:** Students can view all their active tickets in a centralized dashboard.
-* **Status Tracking:** Color-coded badges (Open, In Progress, Resolved) provide instant visual status updates.
-* **Ticket Details:** Dedicated view for deep-diving into ticket specifics, creation dates, and descriptions.
+------------------------------------------------------------------------
 
----
+## ✨ Key Features Added
 
-## 🛠️ Tech Stack
+### 🔐 Security & Authentication
+
+-   **Google OAuth2**: Secure sign-in using Google Accounts (replaces
+    basic local authentication).
+-   **Password Reset Flow**: Email-based password reset using SMTP
+    (`fastapi-mail`).
+-   **Role-Based Access Control (RBAC)**: Strict separation between
+    **Student** and **Admin** APIs.
+
+### ⚡ Real-Time Interactivity
+
+-   **WebSockets**: Real-time updates via a WebSocket connection
+    manager.
+-   **Live Dashboard**: Ticket status changes and new comments appear
+    instantly without page refresh.
+
+### 🛠️ Advanced Admin Tools
+
+-   **Audit Logging**: Logs critical Admin actions (e.g., *Deleted
+    Ticket #101*) for compliance.
+-   **Bulk Actions**: Batch ticket operations (Resolve, Delete, Change
+    Status).
+-   **Canned Responses**: Save and reuse predefined admin replies.
+-   **Data Export**: Download ticket reports as **CSV** or **Excel**.
+-   **Department Filtering**: Admin access restricted by department (IT,
+    Facility, etc.).
+
+### 📊 Analytics & SLAs
+
+-   **Visual Charts**: Chart.js dashboards:
+    -   Ticket Status Distribution
+    -   Tickets by Category
+-   **SLA Timers**: High-priority tickets show countdowns and pulse red
+    when nearing the **4-hour SLA**.
+
+### 💡 User Experience (UX)
+
+-   **Smart Suggestions**: FAQ/self-service recommendations while typing
+    ticket subjects.
+-   **Feedback System**: Users can rate resolved tickets (1--5 stars)
+    and leave reviews.
+
+------------------------------------------------------------------------
+
+## 📦 Technical Changes
 
 ### Backend
-* **Framework:** [FastAPI](https://fastapi.tiangolo.com/) (Python) - High-performance, easy-to-learn web framework.
-* **Database:** [MongoDB Atlas](https://www.mongodb.com/atlas) - Cloud-hosted NoSQL database.
-* **ODM:** [Motor](https://motor.readthedocs.io/) - Asynchronous Python driver for MongoDB.
-* **Security:** `python-jose` (JWT tokens) and `passlib` (Hashing).
+
+-   Added `pandas` and `openpyxl` for report generation.
+-   Added Google authentication libraries for OAuth2 token verification.
+-   Refactored `main.py` to properly serialize MongoDB `ObjectId` values
+    and prevent 500 errors.
 
 ### Frontend
-* **Structure:** Semantic HTML5.
-* **Styling:** [Bootstrap 5](https://getbootstrap.com/) & Custom CSS.
-* **Logic:** Vanilla JavaScript (ES6 Modules) for API communication and DOM manipulation.
-* **Hosting:** Netlify (Frontend) & Render (Backend).
 
----
+-   Integrated **Chart.js** via CDN.
+-   Refactored `dashboard.js` and `admin.html` to support
+    WebSocket-driven updates.
+
+------------------------------------------------------------------------
+
+## 🧪 Testing Instructions
+
+1.  **Google Login**
+    -   Sign in or sign up using a Google account.
+2.  **Real-Time Updates**
+    -   Open the dashboard in two windows (Admin & Student).
+    -   Update a ticket in one window and verify instant updates in the
+        other.
+3.  **SLA Validation**
+    -   Create a **High Priority** ticket and observe the SLA countdown
+        and warning indicators.
+4.  **Export Reports**
+    -   Click **Export Report** in the Admin panel and verify CSV/Excel
+        downloads.
+5.  **Bulk Actions**
+    -   Select multiple tickets and apply **Mark Resolved** or other
+        bulk actions.
+
+------------------------------------------------------------------------
+
+## ⚠️ Deployment Notes
+
+-   Update the `.env` file with the following variables:
+
+        GOOGLE_CLIENT_ID=your_google_client_id
+        MAIL_USERNAME=your_email
+        MAIL_PASSWORD=your_email_password
+
+-   Install new dependencies:
+
+    ``` bash
+    pip install -r requirements.txt
+    ```
+
+------------------------------------------------------------------------
+
+## 📌 Version
+
+**v2 -- Enterprise Edition**
+
 
 ## 📸 Screenshots
 
